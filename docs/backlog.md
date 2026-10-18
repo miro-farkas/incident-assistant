@@ -5,7 +5,7 @@ Status: `TODO` → `IN PROGRESS` → `DONE`. Update the status as part of the it
 
 ---
 
-## INC-001 Project skeleton — TODO
+## INC-001 Project skeleton — DONE
 Maven multi-module build (`incident-assistant-app`, `ops-tools-mcp`), Java 25, latest
 stable Quarkus platform supporting Java 25 (pinned via BOM; verify the version online).
 
