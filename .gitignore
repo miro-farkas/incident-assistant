@@ -1,0 +1,23 @@
+# Maven
+target/
+
+# Quarkus
+.quarkus/
+
+# IntelliJ IDEA (shared project files under .idea/ are versioned; see .idea/.gitignore)
+out/
+
+# Eclipse / VS Code
+.classpath
+.project
+.settings/
+.factorypath
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local environment and logs
+.env
+*.log

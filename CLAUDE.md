@@ -11,6 +11,8 @@ and `docs/backlog.md`.
 
 - **Never** run `git commit`, `git push`, create branches, or open PRs. The maintainer
   does all version control manually. Only change files in the working tree.
+- Commits never go directly to `master` (enforced by `.githooks/pre-commit`). Every item
+  is committed on its own branch; suggest the branch name in the item summary.
 - Implement **one backlog item at a time** (see skill `implement-backlog-item`).
   Do not start the next item without being asked.
 - Everything in the repository is written in **English**: code, comments, docs, commit
