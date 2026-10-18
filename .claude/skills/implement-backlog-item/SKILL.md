@@ -26,4 +26,4 @@ description: Use when asked to implement, continue or finish a backlog item (INC
 8. **Mark** the item `DONE` and update ADR text if the implementation refined it.
 9. **Report** to the maintainer: summary of changes, how to try it locally, suggested
    branch name (`<type>/inc-xxx-<short-slug>`, never `master`), suggested Conventional
-   Commit message(s), open questions. Do not create the branch, commit or push.
+   Commit message(s), open questions. Commit, push and open a PR only when asked.

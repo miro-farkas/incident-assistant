@@ -9,8 +9,10 @@ and `docs/backlog.md`.
 
 ## Hard rules
 
-- **Never** run `git commit`, `git push`, create branches, or open PRs. The maintainer
-  does all version control manually. Only change files in the working tree.
+- Commit, push and open PRs only when the maintainer asks. Work on a feature branch
+  (`<type>/inc-xxx-<short-slug>`); never commit or push to `master`, never force-push,
+  rebase or merge. Merging PRs is done by the maintainer. Commit messages and PR
+  descriptions contain no AI attribution.
 - Commits never go directly to `master` (enforced by `.githooks/pre-commit`). Every item
   is committed on its own branch; suggest the branch name in the item summary.
 - Implement **one backlog item at a time** (see skill `implement-backlog-item`).
@@ -47,7 +49,7 @@ and `docs/backlog.md`.
 ## Code conventions
 
 - Package root: `dev.mfa.incident`. Package by feature (`ingestion`, `workflow`,
-  `triage`, `diagnosis`, `remediation`, `approval`, `knowledge`, `tools`), not by layer.
+  `triage`, `diagnosis`, `remediation`, `approval`, `knowledge`, `tools`, `outbox`), not by layer.
 - Domain types are records or classes without framework annotations where possible;
   JPA entities live in a `persistence` subpackage of their feature.
 - No business logic in REST resources or Kafka consumers — they delegate to services.
