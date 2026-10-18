@@ -1,6 +1,6 @@
 # ADR-0012: Incident state event format
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-18
 
 ## Context

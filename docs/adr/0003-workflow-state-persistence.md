@@ -23,6 +23,15 @@ twice, and keep an audit trail.
 - State-change events are written to `outbox_event` in the same transaction and
   published to Kafka by an outbox relay.
 
+## Implementation notes (INC-002)
+- Lease columns on `incident` are added by INC-006, which introduces the step executor.
+- Each `incident_step` row also stores `from_state`, `to_state` and the reason code of the
+  transition. Every step type runs in exactly one state (`StepType.sourceState`).
+- `outbox_event.payload` is `text`, not `jsonb`, so the relay publishes exactly the bytes
+  that were written (ADR-0012); a bigint identity column orders events.
+- The alert payload is stored as `jsonb`, which normalises key order and whitespace, and is
+  not part of the `Incident` snapshot returned by `IncidentService`.
+
 ## Alternatives considered
 - Kafka as the state store (event sourcing): rejected — adds complexity, approval
   queries become harder.

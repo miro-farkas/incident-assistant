@@ -18,7 +18,7 @@ Acceptance criteria
 - ArchUnit test module with the first rule (package root).
 - README: prerequisites, build, run.
 
-## INC-002 Incident domain and persistence — TODO
+## INC-002 Incident domain and persistence — DONE
 Covers ADR-0001, ADR-0003.
 
 Acceptance criteria
