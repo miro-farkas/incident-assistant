@@ -4,7 +4,9 @@ target/
 # Quarkus
 .quarkus/
 
-# IntelliJ IDEA (shared project files under .idea/ are versioned; see .idea/.gitignore)
+# IntelliJ IDEA
+.idea/
+*.iml
 out/
 
 # Eclipse / VS Code
