@@ -1,0 +1,46 @@
+package dev.mfa.incident.mapper;
+
+import dev.mfa.incident.dto.ModelUsageDto;
+import dev.mfa.incident.dto.ReasonCode;
+import dev.mfa.incident.dto.StepResultDto;
+import dev.mfa.incident.model.IncidentState;
+import dev.mfa.incident.model.IncidentStep;
+import jakarta.enterprise.context.ApplicationScoped;
+import java.util.UUID;
+
+@ApplicationScoped
+public class IncidentStepMapper {
+
+  /**
+   * @param reasonCode reason of the transition; {@code null} when the target state needs none
+   */
+  public IncidentStep toEntity(
+      UUID incidentId,
+      StepResultDto result,
+      IncidentState fromState,
+      IncidentState toState,
+      ReasonCode reasonCode) {
+    IncidentStep step = new IncidentStep();
+    step.setIncidentId(incidentId);
+    step.setStepType(result.type());
+    step.setStatus(result.status());
+    step.setFromState(fromState);
+    step.setToState(toState);
+    step.setInput(result.input());
+    step.setOutput(result.output());
+    ModelUsageDto usage = result.modelUsage();
+    if (usage != null) {
+      step.setModelId(usage.modelId());
+      step.setPromptId(usage.promptId());
+      step.setPromptVersion(usage.promptVersion());
+      step.setInputTokens(usage.inputTokens());
+      step.setOutputTokens(usage.outputTokens());
+    }
+    step.setStartedAt(result.startedAt());
+    step.setFinishedAt(result.finishedAt());
+    step.setDurationMs(result.duration().toMillis());
+    step.setReasonCode(reasonCode == null ? null : reasonCode.value());
+    step.setErrorMessage(result.errorMessage());
+    return step;
+  }
+}

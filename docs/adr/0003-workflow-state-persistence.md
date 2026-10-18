@@ -26,11 +26,13 @@ twice, and keep an audit trail.
 ## Implementation notes (INC-002)
 - Lease columns on `incident` are added by INC-006, which introduces the step executor.
 - Each `incident_step` row also stores `from_state`, `to_state` and the reason code of the
-  transition. Every step type runs in exactly one state (`StepType.sourceState`).
+  transition. Every step type runs in exactly one state
+  (`IncidentStateMachine.sourceState`).
 - `outbox_event.payload` is `text`, not `jsonb`, so the relay publishes exactly the bytes
-  that were written (ADR-0012); a bigint identity column orders events.
+  that were written (ADR-0012); the `sequence_number` identity column orders events
+  (ADR-0014).
 - The alert payload is stored as `jsonb`, which normalises key order and whitespace, and is
-  not part of the `Incident` snapshot returned by `IncidentService`.
+  not part of the `IncidentDto` returned by `IncidentService`.
 
 ## Alternatives considered
 - Kafka as the state store (event sourcing): rejected — adds complexity, approval
