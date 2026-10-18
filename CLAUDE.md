@@ -11,10 +11,8 @@ and `docs/backlog.md`.
 
 - Commit, push and open PRs only when the maintainer asks. Work on a feature branch
   (`<type>/inc-xxx-<short-slug>`); never commit or push to `master`, never force-push,
-  rebase or merge. Merging PRs is done by the maintainer. Commit messages and PR
-  descriptions contain no AI attribution.
-- Commits never go directly to `master` (enforced by `.githooks/pre-commit`). Every item
-  is committed on its own branch; suggest the branch name in the item summary.
+  rebase or merge (enforced by `.githooks/pre-commit`). Merging PRs is done by the
+  maintainer. Commit messages and PR descriptions contain no AI attribution.
 - Implement **one backlog item at a time** (see skill `implement-backlog-item`).
   Do not start the next item without being asked.
 - Everything in the repository is written in **English**: code, comments, docs, commit
@@ -32,19 +30,6 @@ and `docs/backlog.md`.
 
 - Java 25 (use modern language features: records, sealed interfaces, pattern matching
   for switch; no preview features).
-- Quarkus (latest stable platform release supporting Java 25, pinned via BOM).
-- Maven multi-module build with Maven Wrapper.
-- quarkus-langchain4j (AI services, RAG, MCP client), quarkus-mcp-server (mock ops tools).
-- PostgreSQL + pgvector, Flyway, Hibernate ORM (blocking, on virtual threads).
-- SmallRye Reactive Messaging Kafka.
-- OIDC (Keycloak Dev Services) for the approval API.
-- OpenTelemetry + Micrometer.
-
-## Modules
-
-- `incident-assistant-app` — the service (ingestion, workflow, AI steps, REST API).
-- `ops-tools-mcp` — mock operations backend exposed as an MCP server
-  (metrics, logs, deployments, remediation actions). Deterministic fake data.
 
 ## Code conventions
 
@@ -63,8 +48,6 @@ and `docs/backlog.md`.
 ## Build and verify
 
 - `./mvnw spotless:apply` then `./mvnw verify` must pass before an item is reported done.
-- Dev mode: `./mvnw quarkus:dev -pl incident-assistant-app` (Dev Services start Kafka,
-  PostgreSQL with pgvector, Keycloak and Ollama).
 - Default tests must not call a real LLM. AI services are mocked in unit and integration
   tests. The evaluation suite (`-Peval`) is the only place that calls a real model.
 
