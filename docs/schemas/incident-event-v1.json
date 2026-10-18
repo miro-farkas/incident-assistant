@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dev.mfa.incident:schema:incident-event:v1",
+  "title": "Incident state event v1",
+  "description": "Value of messages on topic ops.incidents.events.v1, keyed by incidentId (A-0007). Consumers must ignore unknown properties; v1 only gains optional properties.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "eventId",
+    "eventType",
+    "occurredAt",
+    "incidentId",
+    "incidentVersion",
+    "previousState",
+    "state",
+    "step",
+    "stepId",
+    "reasonCode"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "description": "Version of this schema.",
+      "type": "integer",
+      "const": 1
+    },
+    "eventId": {
+      "description": "Unique event id; consumers deduplicate on it.",
+      "type": "string",
+      "format": "uuid"
+    },
+    "eventType": {
+      "type": "string",
+      "const": "incident.state-changed"
+    },
+    "occurredAt": {
+      "description": "Time of the state change, UTC.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "incidentId": {
+      "description": "Incident id; equal to the message key.",
+      "type": "string",
+      "format": "uuid"
+    },
+    "incidentVersion": {
+      "description": "Incident version after the change. Increases with every change of one incident; consumers drop events with a lower version than one already seen.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "previousState": {
+      "description": "State before the change; null when the incident was created.",
+      "type": ["string", "null"],
+      "enum": ["RECEIVED", "TRIAGED", "DIAGNOSED", "AWAITING_APPROVAL", "APPROVED", "REJECTED", "RESOLVED", "ESCALATED", "FAILED", null]
+    },
+    "state": {
+      "description": "State after the change.",
+      "type": "string",
+      "enum": ["RECEIVED", "TRIAGED", "DIAGNOSED", "AWAITING_APPROVAL", "APPROVED", "REJECTED", "RESOLVED", "ESCALATED", "FAILED"]
+    },
+    "step": {
+      "description": "Workflow step that caused the change; null when no step did.",
+      "type": ["string", "null"],
+      "enum": ["TRIAGE", "DIAGNOSIS", "PROPOSAL", "EXECUTION", null]
+    },
+    "stepId": {
+      "description": "Id of the recorded step, for lookup through the REST API; null when no step did.",
+      "type": ["string", "null"],
+      "format": "uuid"
+    },
+    "reasonCode": {
+      "description": "Machine-readable reason, present for ESCALATED, FAILED and REJECTED.",
+      "type": ["string", "null"],
+      "pattern": "^[A-Z][A-Z0-9_]{0,63}$"
+    }
+  }
+}

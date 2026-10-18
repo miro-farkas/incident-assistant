@@ -3,7 +3,7 @@ name: mcp-tool-conventions
 description: Use when adding or changing a tool in the ops-tools-mcp server or the MCP client configuration in incident-assistant-app.
 ---
 
-# MCP tool conventions (ADR-0006)
+# MCP tool conventions (P-0006, A-0005)
 
 - Tool names are `snake_case` verbs (`get_service_metrics`). Descriptions are written for
   an LLM: what it returns, when to use it, limits.

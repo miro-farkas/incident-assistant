@@ -3,7 +3,7 @@ name: ai-service-conventions
 description: Use when creating or changing a quarkus-langchain4j AI service, prompt, structured output type, guardrail, or tool exposed to an LLM.
 ---
 
-# AI service conventions (ADR-0007, ADR-0008)
+# AI service conventions (P-0007, P-0008)
 
 ## Structure per AI service
 ```

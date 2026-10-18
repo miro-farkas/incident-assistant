@@ -16,7 +16,7 @@ flowchart LR
 ## Workflow (hybrid)
 
 Explicit, persisted state machine. Only the diagnosis step is autonomous, and only with
-read-only tools and a step budget (ADR-0001, ADR-0006).
+read-only tools and a step budget (A-0001, P-0006).
 
 ```mermaid
 stateDiagram-v2
