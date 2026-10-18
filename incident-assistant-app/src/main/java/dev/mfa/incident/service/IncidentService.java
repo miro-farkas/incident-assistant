@@ -22,7 +22,7 @@ import java.util.UUID;
 
 /**
  * Creates incidents and records step results. Each method is one transaction that writes the state
- * change and its outbox event together (ADR-0003). Callers perform LLM and MCP calls before calling
+ * change and its outbox event together (P-0003). Callers perform LLM and MCP calls before calling
  * {@link #recordStep}, outside any transaction.
  */
 @ApplicationScoped

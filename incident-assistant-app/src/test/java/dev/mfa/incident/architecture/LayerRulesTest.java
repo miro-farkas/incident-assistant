@@ -23,7 +23,7 @@ import dev.mfa.incident.model.IncidentState;
 import jakarta.persistence.Entity;
 import jakarta.persistence.MappedSuperclass;
 
-/** Layering (ADR-0013) and entity/DTO rules (ADR-0014) for production code. */
+/** Layering (P-0013) and entity/DTO rules (P-0014) for production code. */
 @AnalyzeClasses(packages = "dev.mfa.incident", importOptions = ImportOption.DoNotIncludeTests.class)
 class LayerRulesTest {
 

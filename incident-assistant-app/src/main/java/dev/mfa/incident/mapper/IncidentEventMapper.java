@@ -9,8 +9,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import java.util.UUID;
 
 /**
- * Builds ADR-0012 state events from a flushed incident, so that version and timestamps are the
- * values stored in the database.
+ * Builds A-0007 state events from a flushed incident, so that version and timestamps are the values
+ * stored in the database.
  */
 @ApplicationScoped
 public class IncidentEventMapper {

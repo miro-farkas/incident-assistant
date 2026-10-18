@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Pattern;
 
 /**
  * Identity of this service instance. The id distinguishes instances in health output and logs and
- * is the owner recorded on work leases (ADR-0003), so it must be unique per running instance.
+ * is the owner recorded on work leases (P-0003), so it must be unique per running instance.
  */
 @ConfigMapping(prefix = "incident.instance")
 public interface InstanceConfig {

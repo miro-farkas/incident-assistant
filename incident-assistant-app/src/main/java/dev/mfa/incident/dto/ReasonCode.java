@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 
 /**
  * Machine-readable reason for entering a state such as {@code ESCALATED}, for example {@code
- * BUDGET_EXCEEDED}. Part of the public event contract (ADR-0012), so free text is not allowed.
+ * BUDGET_EXCEEDED}. Part of the public event contract (A-0007), so free text is not allowed.
  */
 public record ReasonCode(String value) {
 

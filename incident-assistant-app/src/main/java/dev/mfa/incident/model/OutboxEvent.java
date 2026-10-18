@@ -7,7 +7,7 @@ import java.time.Instant;
 import java.util.UUID;
 import org.hibernate.annotations.Generated;
 
-/** An event waiting in the transactional outbox (ADR-0003, ADR-0012). */
+/** An event waiting in the transactional outbox (P-0003, P-0012). */
 @Entity
 @Table(name = "outbox_event")
 public class OutboxEvent extends BaseEntity {

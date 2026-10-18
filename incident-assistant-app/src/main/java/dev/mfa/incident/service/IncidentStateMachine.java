@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * The single definition of allowed incident state transitions (ADR-0001, see the state diagram in
+ * The single definition of allowed incident state transitions (A-0001, see the state diagram in
  * {@code docs/architecture.md}) and of the state each step runs in. Every state change is checked
  * here.
  */

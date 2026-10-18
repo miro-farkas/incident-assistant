@@ -4,8 +4,8 @@ AI-assisted incident triage service. Alerts arrive via Kafka, a hybrid workflow
 (explicit steps + one bounded autonomous step) diagnoses them using RAG and MCP tools,
 and a human approves any remediation action through a REST API before it is executed.
 
-Start every session by reading `docs/architecture.md`, the ADRs in `docs/adr/`,
-and `docs/backlog.md`.
+Start every session by reading `docs/architecture.md`, the ADRs in `docs/adr/` (generic
+`platform/` and app-specific `app/`, index in `docs/adr/README.md`) and `docs/backlog.md`.
 
 ## Hard rules
 
@@ -33,17 +33,17 @@ and `docs/backlog.md`.
 
 ## Code conventions
 
-- Package root: `dev.mfa.incident`. Package by layer (ADR-0013): `model`, `repository`,
+- Package root: `dev.mfa.incident`. Package by layer (P-0013): `model`, `repository`,
   `service`, `dto`, `mapper`, `exception`, `resource`, `messaging`, `config`, `health`.
   Allowed dependencies are enforced by `LayerRulesTest`.
 - Entities (`model`) extend `BaseEntity` and contain no logic, only mapped fields with
   getters/setters. Services take and return DTOs (records), never entities; mapping is
-  hand-written in `mapper` (ADR-0014).
+  hand-written in `mapper` (P-0014).
 - No business logic in REST resources or Kafka consumers — they delegate to services.
 - Constructor injection only. No field injection, no static mutable state.
 - Configuration via `@ConfigMapping` interfaces, validated at startup. No magic numbers.
 - Every external call (LLM, MCP, DB) has a timeout. LLM calls are protected with
-  SmallRye Fault Tolerance as described in ADR-0008.
+  SmallRye Fault Tolerance as described in P-0008.
 - Logging: structured, no PII and no full prompt/response bodies at INFO level.
 - Prompts follow skill `ai-service-conventions`. MCP tools follow `mcp-tool-conventions`.
 

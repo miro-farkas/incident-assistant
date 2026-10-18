@@ -3,7 +3,7 @@ package dev.mfa.incident.dto;
 import static dev.mfa.incident.dto.Validation.requireNonNegative;
 import static dev.mfa.incident.dto.Validation.requireText;
 
-/** Model and prompt that produced a step result, with token usage (ADR-0003, ADR-0008). */
+/** Model and prompt that produced a step result, with token usage (P-0003, P-0008). */
 public record ModelUsageDto(
     String modelId, String promptId, String promptVersion, int inputTokens, int outputTokens) {
 

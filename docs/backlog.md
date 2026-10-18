@@ -19,7 +19,7 @@ Acceptance criteria
 - README: prerequisites, build, run.
 
 ## INC-002 Incident domain and persistence — DONE
-Covers ADR-0001, ADR-0003.
+Covers A-0001, A-0002, P-0003, P-0013, P-0014.
 
 Acceptance criteria
 - Flyway migrations for `incident`, `incident_step`, `approval_decision`, `outbox_event`.
@@ -31,7 +31,7 @@ Acceptance criteria
   one transaction, writing an outbox event.
 
 ## INC-003 Kafka alert ingestion — TODO
-Covers ADR-0004.
+Covers A-0003, P-0004.
 
 Acceptance criteria
 - `docs/schemas/alert-v1.json` and `AlertMessage` record with validation.
@@ -42,21 +42,21 @@ Acceptance criteria
 - Integration tests with Kafka Dev Services for: happy path, duplicate, invalid payload.
 
 ## INC-004 Ops tools MCP server (mock) — TODO
-Covers ADR-0006.
+Covers A-0005, P-0006.
 
 Acceptance criteria
-- `ops-tools-mcp` exposes read tools and action tools as specified in ADR-0006, following
+- `ops-tools-mcp` exposes read tools and action tools as specified in A-0005, following
   skill `mcp-tool-conventions`.
 - Deterministic fake data for at least three services (`checkout`, `payments`,
   `inventory`) with scenarios: bad deployment, memory leak, downstream timeout.
 - Scenario selectable per service via config to make tests deterministic.
 - Action tools require an idempotency key; repeated call returns the original result.
-- Separation of read vs. action access implemented and documented in ADR-0006
+- Separation of read vs. action access implemented and documented in A-0005
   (update ADR with the actual mechanism).
 - Tests for each tool, including error and size-limit behaviour.
 
 ## INC-005 Knowledge base ingestion (RAG) — TODO
-Covers ADR-0005.
+Covers A-0004, P-0005.
 
 Acceptance criteria
 - pgvector enabled via migration; embedding table with metadata and content hash.
@@ -68,7 +68,7 @@ Acceptance criteria
 - Retriever with service filter and minimum score; tests with a fake embedding model.
 
 ## INC-006 Step executor and triage step — TODO
-Covers ADR-0001, ADR-0003, ADR-0007, ADR-0008.
+Covers A-0001, P-0003, P-0007, P-0008.
 
 Acceptance criteria
 - Step executor claims `RECEIVED`/`TRIAGED`/`DIAGNOSED`/`APPROVED` incidents with lease
@@ -76,11 +76,11 @@ Acceptance criteria
 - `TriageAssistant` AI service with prompts as resources (skill `ai-service-conventions`),
   structured output `TriageResult` (severity, category, affected service, summary).
 - Output guardrail validates the result; one reprompt; failure → `ESCALATED`.
-- Fault tolerance and token recording per ADR-0008.
+- Fault tolerance and token recording per P-0008.
 - Tests with mocked AI service for success, invalid output, timeout.
 
 ## INC-007 Diagnosis step (bounded autonomous agent) — TODO
-Covers ADR-0001, ADR-0005, ADR-0006.
+Covers A-0001, A-0004, A-0005, P-0006.
 
 Acceptance criteria
 - `DiagnosisAgent` AI service with knowledge search tool and read-only MCP tools only.
@@ -99,10 +99,10 @@ Acceptance criteria
 - Success → `AWAITING_APPROVAL`.
 
 ## INC-009 Approval REST API — TODO
-Covers ADR-0009.
+Covers A-0006, P-0009.
 
 Acceptance criteria
-- Endpoints, Problem Details, OpenAPI, `If-Match` handling as in ADR-0009.
+- Endpoints, Problem Details, OpenAPI, `If-Match` handling as in A-0006 and P-0009.
 - OIDC with Keycloak Dev Services; role checks tested (`@TestSecurity`).
 - Approver identity from token stored in `approval_decision`.
 - Decision outside `AWAITING_APPROVAL` → 409; stale version → 412.
@@ -122,15 +122,15 @@ Acceptance criteria
 - Safe with multiple instances (test with concurrent claims).
 
 ## INC-012 Observability — TODO
-Covers ADR-0011.
+Covers P-0011.
 
 Acceptance criteria
-- Tracing, metrics, JSON logging and readiness checks as in ADR-0011.
+- Tracing, metrics, JSON logging and readiness checks as in P-0011.
 - Prompt id/version and token counts visible on spans and step rows.
 - Short `docs/operations.md`: key metrics and how to inspect a stuck incident.
 
 ## INC-013 Evaluation suite — TODO
-Covers ADR-0010.
+Covers P-0010.
 
 Acceptance criteria
 - Maven profile `-Peval`, golden dataset (≥ 10 alerts across the mock scenarios).

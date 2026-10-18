@@ -1,6 +1,6 @@
--- Workflow state (ADR-0003): incidents, executed steps, approval decisions and the
--- transactional outbox for state events (ADR-0012).
--- Every table carries the BaseEntity columns (ADR-0014): id (UUIDv7), created_at,
+-- Workflow state (A-0002): incidents, executed steps, approval decisions and the
+-- transactional outbox for state events (A-0007).
+-- Every table carries the BaseEntity columns (P-0014): id (UUIDv7), created_at,
 -- updated_at (both set by the database) and version (optimistic locking).
 
 create table incident (
@@ -18,7 +18,7 @@ create table incident (
         'REJECTED', 'RESOLVED', 'ESCALATED', 'FAILED'))
 );
 
--- At most one open incident per alert source and fingerprint (ADR-0004).
+-- At most one open incident per alert source and fingerprint (A-0003).
 -- The excluded states are the terminal states of IncidentStateMachine.
 create unique index ux_incident_open_fingerprint
     on incident (source, fingerprint)
@@ -80,7 +80,7 @@ create table approval_decision (
 
 create index ix_approval_decision_incident on approval_decision (incident_id);
 
--- Payload is stored as text: the relay publishes it byte for byte (ADR-0012).
+-- Payload is stored as text: the relay publishes it byte for byte (P-0012).
 -- sequence_number orders events across instances; UUIDv7 ids are only time-ordered per
 -- JVM. It is assigned at insert, not at commit, so it has gaps and can commit out of order
 -- across incidents; for one incident it increases, because writes to one incident are

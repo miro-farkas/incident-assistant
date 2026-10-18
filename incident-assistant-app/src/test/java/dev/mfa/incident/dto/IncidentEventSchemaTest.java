@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * The serialized {@link IncidentStateChanged} must match docs/schemas/incident-event-v1.json
- * (ADR-0012). Uses the application ObjectMapper, so Quarkus Jackson settings are covered.
+ * (A-0007). Uses the application ObjectMapper, so Quarkus Jackson settings are covered.
  */
 @QuarkusTest
 class IncidentEventSchemaTest {

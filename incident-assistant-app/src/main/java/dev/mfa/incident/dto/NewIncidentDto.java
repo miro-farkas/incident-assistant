@@ -7,7 +7,7 @@ import static dev.mfa.incident.dto.Validation.requireText;
  *
  * @param source system that raised the alert
  * @param fingerprint alert identity within the source; one open incident per source and fingerprint
- *     (ADR-0004)
+ *     (A-0003)
  * @param alertPayload the alert as a JSON document
  */
 public record NewIncidentDto(String source, String fingerprint, String alertPayload) {

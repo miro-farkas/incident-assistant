@@ -10,7 +10,7 @@ import jakarta.transaction.Transactional;
 
 /**
  * Writes messages to {@code outbox_event} inside the transaction of the state change that caused
- * them, so a message exists if and only if that change was committed (ADR-0003).
+ * them, so a message exists if and only if that change was committed (P-0003).
  */
 @ApplicationScoped
 public class OutboxWriter {

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:dev.mfa.incident:schema:incident-event:v1",
   "title": "Incident state event v1",
-  "description": "Value of messages on topic ops.incidents.events.v1, keyed by incidentId (ADR-0012). Consumers must ignore unknown properties; v1 only gains optional properties.",
+  "description": "Value of messages on topic ops.incidents.events.v1, keyed by incidentId (A-0007). Consumers must ignore unknown properties; v1 only gains optional properties.",
   "type": "object",
   "required": [
     "schemaVersion",
