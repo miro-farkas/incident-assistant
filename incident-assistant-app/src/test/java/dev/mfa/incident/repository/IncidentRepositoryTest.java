@@ -35,7 +35,8 @@ class IncidentRepositoryTest {
                 QuarkusTransaction.requiringNew()
                     .run(
                         () -> {
-                          Incident entity = repository.findById(incident.id()).orElseThrow();
+                          Incident entity =
+                              repository.findByIdOptional(incident.id()).orElseThrow();
                           QuarkusTransaction.requiringNew()
                               .run(
                                   () ->

@@ -39,6 +39,8 @@ Start every session by reading `docs/architecture.md`, the ADRs in `docs/adr/` (
 - Entities (`model`) extend `BaseEntity` and contain no logic, only mapped fields with
   getters/setters. Services take and return DTOs (records), never entities; mapping is
   hand-written in `mapper` (P-0014).
+- Repositories implement `PanacheRepositoryBase<Entity, UUID>` and expose named query
+  methods; no active record, no Panache types outside `repository` (P-0015).
 - No business logic in REST resources or Kafka consumers — they delegate to services.
 - Constructor injection only. No field injection, no static mutable state.
 - Configuration via `@ConfigMapping` interfaces, validated at startup. No magic numbers.

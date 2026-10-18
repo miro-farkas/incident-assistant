@@ -1,19 +1,10 @@
 package dev.mfa.incident.repository;
 
 import dev.mfa.incident.model.IncidentStep;
+import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.persistence.EntityManager;
+import java.util.UUID;
 
+/** Append-only: services only insert step rows (P-0014). */
 @ApplicationScoped
-public class IncidentStepRepository {
-
-  private final EntityManager entityManager;
-
-  public IncidentStepRepository(EntityManager entityManager) {
-    this.entityManager = entityManager;
-  }
-
-  public void persist(IncidentStep step) {
-    entityManager.persist(step);
-  }
-}
+public class IncidentStepRepository implements PanacheRepositoryBase<IncidentStep, UUID> {}

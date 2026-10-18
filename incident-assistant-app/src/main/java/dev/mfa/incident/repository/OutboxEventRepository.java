@@ -1,19 +1,9 @@
 package dev.mfa.incident.repository;
 
 import dev.mfa.incident.model.OutboxEvent;
+import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.persistence.EntityManager;
+import java.util.UUID;
 
 @ApplicationScoped
-public class OutboxEventRepository {
-
-  private final EntityManager entityManager;
-
-  public OutboxEventRepository(EntityManager entityManager) {
-    this.entityManager = entityManager;
-  }
-
-  public void persist(OutboxEvent event) {
-    entityManager.persist(event);
-  }
-}
+public class OutboxEventRepository implements PanacheRepositoryBase<OutboxEvent, UUID> {}

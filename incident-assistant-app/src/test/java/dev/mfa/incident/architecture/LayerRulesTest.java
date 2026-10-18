@@ -23,7 +23,7 @@ import dev.mfa.incident.model.IncidentState;
 import jakarta.persistence.Entity;
 import jakarta.persistence.MappedSuperclass;
 
-/** Layering (P-0013) and entity/DTO rules (P-0014) for production code. */
+/** Layering (P-0013), entity/DTO rules (P-0014) and data access (P-0015) for production code. */
 @AnalyzeClasses(packages = "dev.mfa.incident", importOptions = ImportOption.DoNotIncludeTests.class)
 class LayerRulesTest {
 
@@ -34,9 +34,13 @@ class LayerRulesTest {
               c.isAnnotatedWith(Entity.class) || c.isAnnotatedWith(MappedSuperclass.class));
 
   private static final DescribedPredicate<JavaClass> JPA_OR_HIBERNATE_ORM =
-      resideInAnyPackage("jakarta.persistence..", "org.hibernate..")
+      resideInAnyPackage(
+              "jakarta.persistence..",
+              "org.hibernate..",
+              "io.quarkus.hibernate.orm.panache..",
+              "io.quarkus.panache..")
           .and(DescribedPredicate.not(resideInAPackage("org.hibernate.validator..")))
-          .as("are JPA or Hibernate ORM classes");
+          .as("are JPA, Hibernate ORM or Panache classes");
 
   private static final DescribedPredicate<JavaClass> NON_ENUM_MODEL_CLASS =
       resideInAPackage("..model..")

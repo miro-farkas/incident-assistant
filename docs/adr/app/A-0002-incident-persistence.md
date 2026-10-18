@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-18
-- Applies: P-0003, P-0013, P-0014
+- Applies: P-0003, P-0013, P-0014, P-0015
 
 ## Context
 The incident workflow (A-0001) needs the tables of P-0003, shaped by the entity conventions

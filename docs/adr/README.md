@@ -32,13 +32,14 @@ New ADRs use `platform/template.md` (skill `write-adr`).
 | [P-0012](platform/P-0012-event-message-format.md) | Event message format |
 | [P-0013](platform/P-0013-layered-package-structure.md) | Layered package structure |
 | [P-0014](platform/P-0014-entities-base-entity-and-dtos.md) | Logic-free entities, BaseEntity and DTOs |
+| [P-0015](platform/P-0015-data-access-with-panache-repositories.md) | Data access with Panache repositories |
 
 ## App
 
 | ID | Title | Applies |
 |---|---|---|
 | [A-0001](app/A-0001-incident-workflow.md) | Incident workflow | P-0001 |
-| [A-0002](app/A-0002-incident-persistence.md) | Incident persistence schema | P-0003, P-0013, P-0014 |
+| [A-0002](app/A-0002-incident-persistence.md) | Incident persistence schema | P-0003, P-0013, P-0014, P-0015 |
 | [A-0003](app/A-0003-alert-ingestion.md) | Alert ingestion via Kafka | P-0004 |
 | [A-0004](app/A-0004-knowledge-base.md) | Knowledge base of runbooks and postmortems | P-0005 |
 | [A-0005](app/A-0005-ops-tools-mcp-server.md) | Ops tools MCP server | P-0006 |

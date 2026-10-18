@@ -113,7 +113,7 @@ public class IncidentService {
 
   private Incident find(UUID incidentId) {
     return incidents
-        .findById(incidentId)
+        .findByIdOptional(incidentId)
         .orElseThrow(() -> new IncidentNotFoundException(incidentId));
   }
 
