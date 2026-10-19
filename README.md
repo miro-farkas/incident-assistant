@@ -144,6 +144,32 @@ echo '<alert JSON>' | docker run --rm -i --network incident-assistant_default ed
   -b kafka:19092 -P -t ops.alerts.v1
 ```
 
+### ops-tools-mcp
+
+MCP server with deterministic fake data for the services `checkout`, `payments` and
+`inventory` (A-0005). Read and action tools are served on separate endpoints
+(Streamable HTTP; legacy SSE at `<path>/sse`):
+
+| Endpoint | Tools | Access |
+|---|---|---|
+| `/mcp/read` | `get_service_metrics`, `search_logs`, `get_recent_deployments`, `get_service_health` | open |
+| `/mcp/actions` | `restart_service`, `rollback_deployment`, `scale_service` | header `X-Api-Key` |
+
+| Property | Environment variable | Default | Description |
+|---|---|---|---|
+| `ops.actions.api-key` | `OPS_ACTIONS_API_KEY` | dev/test: fixed non-secret value; prod: required | Key that clients of `/mcp/actions` send in `X-Api-Key`. At least 32 characters. |
+| `ops.services.<service>.scenario` | `OPS_SERVICES_<SERVICE>_SCENARIO` | checkout `bad-deployment`, payments `downstream-timeout`, inventory `memory-leak` | Simulated situation: `healthy`, `bad-deployment`, `memory-leak`, `downstream-timeout`. Only catalogued services are accepted. |
+| `ops.services.<service>.fault` | `OPS_SERVICES_<SERVICE>_FAULT` | `none` | Simulated backend failure: `none`, `unavailable` (tool error), `slow`. |
+| `ops.faults.slow-delay` | `OPS_FAULTS_SLOW_DELAY` | `5s` | Delay of every call for a service with fault `slow` (up to 5 minutes). |
+| `ops.fake-data.anchor` | `OPS_FAKE_DATA_ANCHOR` | test: `2026-10-18T10:00:00Z`; otherwise unset | Fixed "now" of the simulated timeline; unset means the current minute. |
+| `ops.actions.idempotency-retention` | `OPS_ACTIONS_IDEMPOTENCY_RETENTION` | `24h` | How long an action result is replayed for its idempotency key. |
+| `ops.actions.max-idempotency-records` | `OPS_ACTIONS_MAX_IDEMPOTENCY_RECORDS` | `10000` | Idempotency records kept in memory; when full, new actions are refused until records expire. |
+
+Try it in dev mode with the [MCP Inspector](https://github.com/modelcontextprotocol/inspector)
+(`npx @modelcontextprotocol/inspector`, transport "Streamable HTTP"):
+`http://localhost:8081/mcp/read`, or `http://localhost:8081/mcp/actions` with header
+`X-Api-Key: dev-only-actions-key-not-a-secret-0001`.
+
 ## Run the packaged application
 
 Against the local services:
@@ -156,4 +182,6 @@ INCIDENT_INSTANCE_ID=incident-assistant-1 \
   QUARKUS_DATASOURCE_USERNAME=incident QUARKUS_DATASOURCE_PASSWORD=incident \
   KAFKA_BOOTSTRAP_SERVERS=localhost:9092 \
   java -jar incident-assistant-app/target/quarkus-app/quarkus-run.jar
+OPS_ACTIONS_API_KEY=<at least 32 characters> QUARKUS_HTTP_PORT=8081 \
+  java -jar ops-tools-mcp/target/quarkus-app/quarkus-run.jar
 ```

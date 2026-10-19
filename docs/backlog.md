@@ -41,7 +41,7 @@ Acceptance criteria
 - Outbox relay publishes state events to `ops.incidents.events.v1` keyed by incident id.
 - Integration tests with Kafka Dev Services for: happy path, duplicate, invalid payload.
 
-## INC-004 Ops tools MCP server (mock) — TODO
+## INC-004 Ops tools MCP server (mock) — DONE
 Covers A-0005, P-0006.
 
 Acceptance criteria
