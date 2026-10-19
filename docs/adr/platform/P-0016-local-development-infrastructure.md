@@ -1,6 +1,6 @@
 # P-0016: Local development infrastructure
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-19
 
 ## Context
@@ -20,7 +20,10 @@ every run so that results do not depend on earlier runs or on local data (P-0010
   mode stops (`quarkus.compose.devservices.stop-services=false`), and the next dev mode
   session finds them through a fixed compose project name
   (`quarkus.compose.devservices.project-name`) instead of starting new ones. Volumes are
-  never removed by Quarkus (`quarkus.compose.devservices.remove-volumes=false`).
+  never removed by Quarkus (`quarkus.compose.devservices.remove-volumes=false`), and the
+  Testcontainers resource reaper is not registered for the project
+  (`quarkus.compose.devservices.ryuk-enabled=false`), because it would remove the
+  project's containers and volumes once the dev mode JVM exits.
 - Services publish fixed host ports, so the same addresses work for external tools and for
   running the packaged application with `docker compose -f compose-devservices.yml up`.
 - Credentials in the compose file are fixed, local-only values. Production configuration

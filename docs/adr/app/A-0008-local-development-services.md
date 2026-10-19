@@ -1,6 +1,6 @@
 # A-0008: Local development services
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-19
 - Applies: P-0016, P-0010
 
@@ -28,8 +28,14 @@ backlog items. Tests start these through Dev Services with the configuration in
 - `kafka-init` creates `ops.alerts.v1` (1 partition), `ops.alerts.v1.dlq` (1) and
   `ops.incidents.events.v1` (3) with `--if-not-exists`, matching the test topics. Broker
   auto-creation stays off, so a wrong topic name fails instead of creating a topic.
+  It carries the labels `io.quarkus.devservices.compose.ignore` (while it runs, Quarkus
+  would otherwise take it for the broker, as it uses the same image) and
+  `io.quarkus.devservices.compose.wait_for.ports.disable` (Quarkus does not wait for it).
 - Compose Dev Services is disabled in the `%test` profile; tests keep
   `quarkus.datasource.devservices.*` and `quarkus.kafka.devservices.*`.
+- In the `%dev` profile, Kafka Dev Services does not look for a shared broker
+  (`quarkus.kafka.devservices.shared=false`); otherwise a broker started by another dev
+  mode application takes precedence over the compose service.
 - Keycloak and Ollama are added to the same file by the backlog items that introduce them;
   Ollama models go into a named volume.
 
@@ -43,6 +49,6 @@ backlog items. Tests start these through Dev Services with the configuration in
 - The README's local Kafka instructions use the fixed address `localhost:9092`.
 - Topic and image changes have to be made in both `application.properties` (tests) and
   `compose-devservices.yml` (dev).
-- Implementation must verify with Quarkus 3.40 that `kafka-init` exits without failing the
-  dev mode start, and that `%test.quarkus.compose.devservices.enabled=false` makes tests
-  fall back to the regular Dev Services.
+- Verified with Quarkus 3.40.1: a fresh dev mode start creates the project and topics, a
+  later start discovers the running services with their data, and with
+  `%test.quarkus.compose.devservices.enabled=false` tests use the regular Dev Services.
