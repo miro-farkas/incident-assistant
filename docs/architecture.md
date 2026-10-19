@@ -5,6 +5,7 @@
 ```mermaid
 flowchart LR
     K[(Kafka: ops.alerts.v1)] --> APP[incident-assistant-app]
+    APP -- invalid alerts --> KD[(Kafka: ops.alerts.v1.dlq)]
     APP --> PG[(PostgreSQL + pgvector)]
     APP -- MCP read tools --> MCP[ops-tools-mcp]
     APP -- MCP action tools --> MCP

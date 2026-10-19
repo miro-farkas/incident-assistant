@@ -30,7 +30,7 @@ Acceptance criteria
 - Repository/service API to create an incident and record a step result + transition in
   one transaction, writing an outbox event.
 
-## INC-003 Kafka alert ingestion — TODO
+## INC-003 Kafka alert ingestion — DONE
 Covers A-0003, P-0004.
 
 Acceptance criteria

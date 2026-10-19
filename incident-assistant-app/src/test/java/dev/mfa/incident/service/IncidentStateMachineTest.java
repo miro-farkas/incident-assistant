@@ -96,6 +96,7 @@ class IncidentStateMachineTest {
     }
 
     assertThat(terminal).containsExactlyInAnyOrder(REJECTED, RESOLVED, ESCALATED, FAILED);
+    assertThat(IncidentStateMachine.terminalStates()).isEqualTo(terminal);
   }
 
   @Test

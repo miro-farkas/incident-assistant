@@ -77,6 +77,41 @@ public class WorkflowTables {
                     .getResultList());
   }
 
+  /** Ids of all incidents, open or closed, for one alert, oldest first. */
+  public List<UUID> incidentIds(String source, String fingerprint) {
+    return QuarkusTransaction.requiringNew()
+        .call(
+            () ->
+                entityManager
+                    .createNativeQuery(
+                        "select id from incident where source = :source"
+                            + " and fingerprint = :fingerprint order by created_at, id",
+                        UUID.class)
+                    .setParameter("source", source)
+                    .setParameter("fingerprint", fingerprint)
+                    .getResultList()
+                    .stream()
+                    .map(UUID.class::cast)
+                    .toList());
+  }
+
+  /** Alert payloads of the occurrences of one incident as text, oldest first. */
+  public List<String> occurrencePayloads(UUID incidentId) {
+    return QuarkusTransaction.requiringNew()
+        .call(
+            () ->
+                entityManager
+                    .createNativeQuery(
+                        "select alert_payload::text from alert_occurrence"
+                            + " where incident_id = :incidentId order by created_at, id",
+                        String.class)
+                    .setParameter("incidentId", incidentId)
+                    .getResultList()
+                    .stream()
+                    .map(String.class::cast)
+                    .toList());
+  }
+
   public String alertPayload(UUID incidentId) {
     return QuarkusTransaction.requiringNew()
         .call(

@@ -20,6 +20,9 @@ of P-0014.
     the decision; one decision per proposal step.
   - `outbox_event`: `sequence_number`, `event_id`, `message_key`, `event_type`, `payload`
     (`text`), `published_at`.
+- `V2__alert_occurrence.sql`: `alert_occurrence` (incident id, `alert_payload` as `jsonb`),
+  append-only, for repeated alerts of an open incident (A-0003), and a plain index on
+  `incident (source, fingerprint)` for the open-incident lookup.
 - A partial unique index on `incident (source, fingerprint)` excludes the terminal states
   of `IncidentStateMachine`, so there is at most one open incident per alert (A-0003).
 - `IncidentService` is the only writer: creating an incident and recording a step result

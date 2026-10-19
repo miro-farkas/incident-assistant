@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dev.mfa.incident:schema:alert:v1",
+  "title": "Alert v1",
+  "description": "Value of messages on topic ops.alerts.v1 (A-0003): one firing alert per message, UTF-8 JSON, at most incident.alerts.max-payload-bytes (default 65536) bytes. Unknown properties are ignored and not stored. Invalid messages go to ops.alerts.v1.dlq with the reason in header dead-letter-reason.",
+  "type": "object",
+  "required": [
+    "source",
+    "fingerprint",
+    "alertName",
+    "summary",
+    "startsAt"
+  ],
+  "properties": {
+    "source": {
+      "description": "System that raised the alert, for example prometheus.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "fingerprint": {
+      "description": "Identity of the alert within the source. Alerts with the same source and fingerprint belong to the same open incident.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "alertName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "summary": {
+      "description": "One-line description.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "startsAt": {
+      "description": "Time the alert started firing.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "severity": {
+      "description": "Severity as reported by the source; triage assigns its own.",
+      "type": ["string", "null"],
+      "maxLength": 32
+    },
+    "service": {
+      "description": "Affected service as reported by the source.",
+      "type": ["string", "null"],
+      "maxLength": 100
+    },
+    "description": {
+      "type": ["string", "null"],
+      "maxLength": 4000
+    },
+    "labels": {
+      "description": "Additional key-value labels.",
+      "type": ["object", "null"],
+      "maxProperties": 50,
+      "propertyNames": {
+        "minLength": 1,
+        "maxLength": 100
+      },
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 500
+      }
+    },
+    "generatorUrl": {
+      "description": "Link to the alert in the source system.",
+      "type": ["string", "null"],
+      "format": "uri",
+      "maxLength": 2000
+    }
+  }
+}
