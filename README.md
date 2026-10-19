@@ -23,8 +23,8 @@ See `docs/architecture.md`, `docs/adr/` and `docs/backlog.md`.
 - No local Maven needed: use the Maven Wrapper (`./mvnw`, or `mvnw.cmd` on Windows).
   The build enforces Java 25+ and Maven 3.9.9+.
 - A Docker-compatible container runtime for Quarkus Dev Services. Tests and dev mode of
-  `incident-assistant-app` start PostgreSQL (`pgvector/pgvector:pg17`) automatically;
-  Kafka, Keycloak and Ollama follow with later backlog items.
+  `incident-assistant-app` start PostgreSQL (`pgvector/pgvector:pg17`) and a Kafka broker
+  automatically; Keycloak and Ollama follow with later backlog items.
 
 ## Git workflow
 
@@ -84,14 +84,39 @@ an invalid value stops the application with a message naming the property.
 | `quarkus.datasource.jdbc.additional-jdbc-properties.options` | | `-c statement_timeout=10s` | Server-side limit per SQL statement. |
 | `quarkus.datasource.jdbc.additional-jdbc-properties.socketTimeout` | | `30` (seconds) | Client-side limit for a blocked socket read. |
 | `quarkus.transaction-manager.default-transaction-timeout` | `QUARKUS_TRANSACTION_MANAGER_DEFAULT_TRANSACTION_TIMEOUT` | `30S` | Maximum duration of a transaction. |
+| `kafka.bootstrap.servers` | `KAFKA_BOOTSTRAP_SERVERS` | dev/test: Dev Services; prod: required | Kafka brokers. |
+| `incident.alerts.max-payload-bytes` | `INCIDENT_ALERTS_MAX_PAYLOAD_BYTES` | `65536` | Largest accepted alert message; larger ones go to the DLQ unparsed. |
+| `smallrye.messaging.worker.<virtual-thread>.max-concurrency` | | `8` | Alerts processed at the same time; keep it below the connection pool size. |
+| `quarkus.fault-tolerance."dev.mfa.incident.service.AlertIngestionService/ingest".retry.*` | | 3 retries, 500 ms delay, 30 s total | Retries of an alert after a processing failure, before it goes to the DLQ. |
+| `incident.outbox.relay.interval` | `INCIDENT_OUTBOX_RELAY_INTERVAL` | `1s` | Pause between outbox relay runs. |
+| `incident.outbox.relay.batch-size` | `INCIDENT_OUTBOX_RELAY_BATCH_SIZE` | `100` | Events per relay transaction (1-1000). |
+| `incident.outbox.relay.send-timeout` | `INCIDENT_OUTBOX_RELAY_SEND_TIMEOUT` | `10s` | Longest wait for the broker to acknowledge one event. |
+| `incident.outbox.relay.max-batch-duration` | `INCIDENT_OUTBOX_RELAY_MAX_BATCH_DURATION` | `10s` | No new send starts in a batch after this time. |
 
 The schema is managed by Flyway (`incident-assistant-app/src/main/resources/db/migration`)
 and migrated at startup; Hibernate only validates that the entities match it. Readiness
-(`/q/health/ready`) includes the database.
+(`/q/health/ready`) includes the database and Kafka.
+
+### Kafka topics
+
+| Topic | Direction | Format |
+|---|---|---|
+| `ops.alerts.v1` | in | `docs/schemas/alert-v1.json` |
+| `ops.alerts.v1.dlq` | out | rejected alerts, unchanged, reason in header `dead-letter-reason` |
+| `ops.incidents.events.v1` | out | `docs/schemas/incident-event-v1.json`, keyed by incident id |
+
+In dev mode, send an alert to the Dev Services broker (the startup log prints its address
+as `-Dkafka.bootstrap.servers=localhost:<port>`) with [kcat](https://github.com/edenhill/kcat):
+
+```shell
+echo '{"source":"prometheus","fingerprint":"fp-1","alertName":"HighErrorRate","summary":"Error rate above 5%","startsAt":"2026-10-18T09:58:00Z"}' \
+  | kcat -P -b <broker> -t ops.alerts.v1
+kcat -C -b <broker> -t ops.incidents.events.v1 -f '%k %s\n' -e
+```
 
 ## Run the packaged application
 
 ```shell
 ./mvnw package -DskipTests
-INCIDENT_INSTANCE_ID=incident-assistant-1 java -jar incident-assistant-app/target/quarkus-app/quarkus-run.jar
+INCIDENT_INSTANCE_ID=incident-assistant-1 KAFKA_BOOTSTRAP_SERVERS=localhost:9092 java -jar incident-assistant-app/target/quarkus-app/quarkus-run.jar
 ```

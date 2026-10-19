@@ -19,6 +19,7 @@ import dev.mfa.incident.dto.ReasonCode;
 import dev.mfa.incident.exception.IllegalStateTransitionException;
 import dev.mfa.incident.exception.IncidentNotFoundException;
 import dev.mfa.incident.exception.IncidentVersionConflictException;
+import dev.mfa.incident.exception.OpenIncidentExistsException;
 import dev.mfa.incident.exception.StepNotAllowedException;
 import dev.mfa.incident.model.IncidentState;
 import dev.mfa.incident.model.OutboxEvent;
@@ -79,7 +80,6 @@ class IncidentServiceTest {
     OutboxEvent event = events.getFirst();
     assertThat(event.getEventType()).isEqualTo(IncidentStateChanged.EVENT_TYPE);
     assertThat(event.getMessageKey()).isEqualTo(incident.id().toString());
-    assertThat(event.getPublishedAt()).isNull();
     assertThat(event.getSequenceNumber()).isNotNull();
 
     JsonNode payload = conformingPayload(event);
@@ -315,6 +315,18 @@ class IncidentServiceTest {
     assertThat(service.get(created.id()).version()).isEqualTo(FIRST_VERSION + 1);
     assertThat(tables.steps(created.id())).hasSize(1);
     assertThat(tables.outboxEvents(created.id())).hasSize(2);
+  }
+
+  @Test
+  void rejectsSecondOpenIncidentForSameAlert() {
+    NewIncidentDto alert = newIncident();
+    IncidentDto open = service.create(alert);
+
+    assertThatThrownBy(() -> service.create(alert))
+        .isInstanceOf(OpenIncidentExistsException.class)
+        .hasMessageNotContaining(alert.fingerprint());
+
+    assertThat(tables.incidentIds(alert.source(), alert.fingerprint())).containsExactly(open.id());
   }
 
   @Test

@@ -36,6 +36,8 @@ public final class IncidentStateMachine {
   private static final Set<IncidentState> REASON_REQUIRED =
       Collections.unmodifiableSet(EnumSet.of(ESCALATED, FAILED, REJECTED));
 
+  private static final Set<IncidentState> TERMINAL_STATES = terminalStatesOf(TRANSITIONS);
+
   private IncidentStateMachine() {}
 
   /** Returns the states reachable from {@code from} in one transition. */
@@ -61,6 +63,11 @@ public final class IncidentStateMachine {
     return allowedTargets(state).isEmpty();
   }
 
+  /** All terminal states; the partial unique index of the incident table excludes exactly these. */
+  public static Set<IncidentState> terminalStates() {
+    return TERMINAL_STATES;
+  }
+
   /** Whether entering {@code state} must carry a reason code. */
   public static boolean requiresReasonCode(IncidentState state) {
     return REASON_REQUIRED.contains(state);
@@ -84,6 +91,18 @@ public final class IncidentStateMachine {
     transitions.put(FAILED, EnumSet.noneOf(IncidentState.class));
     transitions.replaceAll((state, targets) -> Collections.unmodifiableSet(targets));
     return Collections.unmodifiableMap(transitions);
+  }
+
+  private static Set<IncidentState> terminalStatesOf(
+      Map<IncidentState, Set<IncidentState>> transitions) {
+    Set<IncidentState> terminal = EnumSet.noneOf(IncidentState.class);
+    transitions.forEach(
+        (state, targets) -> {
+          if (targets.isEmpty()) {
+            terminal.add(state);
+          }
+        });
+    return Collections.unmodifiableSet(terminal);
   }
 
   private static Map<StepType, IncidentState> stepSourceStates() {

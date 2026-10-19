@@ -1,11 +1,13 @@
 package dev.mfa.incident.testsupport;
 
+import dev.mfa.incident.dto.AlertMessage;
 import dev.mfa.incident.dto.ModelUsageDto;
 import dev.mfa.incident.dto.NewIncidentDto;
 import dev.mfa.incident.dto.StepResultDto;
 import dev.mfa.incident.model.StepStatus;
 import dev.mfa.incident.model.StepType;
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 /** Test data for workflow tests. Every incident gets a unique fingerprint. */
@@ -18,13 +20,38 @@ public final class WorkflowFixtures {
       new ModelUsageDto("llama3.2:3b", "triage", "3", 812, 96);
   public static final long STEP_DURATION_MS = 2350;
 
+  public static final Instant ALERT_STARTS_AT = Instant.parse("2026-10-18T09:58:00Z");
+
   private static final Instant STARTED_AT = Instant.parse("2026-10-18T10:00:00Z");
   private static final Instant FINISHED_AT = STARTED_AT.plusMillis(STEP_DURATION_MS);
 
   private WorkflowFixtures() {}
 
   public static NewIncidentDto newIncident() {
-    return new NewIncidentDto(SOURCE, "fp-" + UUID.randomUUID(), ALERT_PAYLOAD);
+    return new NewIncidentDto(SOURCE, uniqueFingerprint(), ALERT_PAYLOAD);
+  }
+
+  public static String uniqueFingerprint() {
+    return "fp-" + UUID.randomUUID();
+  }
+
+  /** A valid alert with every property set and a unique fingerprint. */
+  public static AlertMessage alert() {
+    return alert(uniqueFingerprint());
+  }
+
+  public static AlertMessage alert(String fingerprint) {
+    return new AlertMessage(
+        SOURCE,
+        fingerprint,
+        "HighErrorRate",
+        "Error rate above 5% for checkout",
+        ALERT_STARTS_AT,
+        "critical",
+        "checkout",
+        "Ratio of 5xx responses was 0.27 over the last 5 minutes.",
+        Map.of("env", "prod", "region", "eu-west-1"),
+        "https://prometheus.example.com/graph?g0.expr=http_errors");
   }
 
   public static StepResultDto succeeded(StepType type) {

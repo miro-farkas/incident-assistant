@@ -69,8 +69,14 @@ public class OutboxEvent extends BaseEntity {
     this.payload = payload;
   }
 
-  /** Set by the outbox relay (INC-003); {@code null} while the event is pending. */
+  /**
+   * Set by the outbox relay after the broker acknowledged the event; {@code null} while pending.
+   */
   public Instant getPublishedAt() {
     return publishedAt;
+  }
+
+  public void setPublishedAt(Instant publishedAt) {
+    this.publishedAt = publishedAt;
   }
 }

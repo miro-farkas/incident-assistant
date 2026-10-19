@@ -7,6 +7,7 @@ import dev.mfa.incident.dto.StepResultDto;
 import dev.mfa.incident.exception.IllegalStateTransitionException;
 import dev.mfa.incident.exception.IncidentNotFoundException;
 import dev.mfa.incident.exception.IncidentVersionConflictException;
+import dev.mfa.incident.exception.OpenIncidentExistsException;
 import dev.mfa.incident.exception.StepNotAllowedException;
 import dev.mfa.incident.mapper.IncidentEventMapper;
 import dev.mfa.incident.mapper.IncidentMapper;
@@ -50,13 +51,17 @@ public class IncidentService {
     this.outbox = outbox;
   }
 
-  /** Opens an incident in {@link IncidentStateMachine#INITIAL_STATE}. */
+  /**
+   * Opens an incident in {@link IncidentStateMachine#INITIAL_STATE}.
+   *
+   * @throws OpenIncidentExistsException if an incident with the same source and fingerprint is
+   *     still open; the transaction is then rolled back
+   */
   @Transactional
   public IncidentDto create(NewIncidentDto newIncident) {
     Incident incident = incidentMapper.toEntity(newIncident);
     incident.setState(IncidentStateMachine.INITIAL_STATE);
-    incidents.persist(incident);
-    incidents.flush();
+    incidents.persistNew(incident);
     outbox.write(eventMapper.created(incident));
     return incidentMapper.toDto(incident);
   }

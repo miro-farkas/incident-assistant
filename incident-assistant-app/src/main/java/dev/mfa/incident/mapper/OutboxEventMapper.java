@@ -1,6 +1,7 @@
 package dev.mfa.incident.mapper;
 
 import dev.mfa.incident.dto.OutboxMessage;
+import dev.mfa.incident.dto.OutboxRecord;
 import dev.mfa.incident.model.OutboxEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -17,5 +18,10 @@ public class OutboxEventMapper {
     event.setEventType(message.eventType());
     event.setPayload(payload);
     return event;
+  }
+
+  public OutboxRecord toRecord(OutboxEvent event) {
+    return new OutboxRecord(
+        event.getEventId(), event.getSequenceNumber(), event.getMessageKey(), event.getPayload());
   }
 }
