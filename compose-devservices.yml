@@ -1,0 +1,81 @@
+# Local development services (P-0016, A-0008). Quarkus dev mode starts and discovers them
+# through Compose Dev Services and leaves them running when it stops; tests do not use this
+# file. Credentials are for local use only. Clean start: docker compose -f
+# compose-devservices.yml down -v
+name: incident-assistant
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: incident
+      POSTGRES_PASSWORD: incident
+      POSTGRES_DB: incident
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U incident -d incident"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  # Single node in KRaft combined mode. Host clients use localhost:9092, containers on the
+  # compose network use kafka:19092.
+  kafka:
+    image: apache/kafka:4.2.0
+    environment:
+      CLUSTER_ID: vrHUsQesT6Wq6MJkHqP22A
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,INTERNAL://:19092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,INTERNAL://kafka:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:19092 > /dev/null"]
+      interval: 5s
+      timeout: 20s
+      retries: 20
+      start_period: 10s
+
+  # Creates the topics once the broker is healthy, with the partition counts of
+  # quarkus.kafka.devservices.topic-partitions, then exits. Quarkus neither waits for it nor
+  # takes it for the broker (same image, so it would match while running).
+  kafka-init:
+    image: apache/kafka:4.2.0
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "-ec"]
+    command:
+      - |
+        for topic in ops.alerts.v1:1 ops.alerts.v1.dlq:1 ops.incidents.events.v1:3; do
+          /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:19092 --create --if-not-exists \
+            --topic "$${topic%%:*}" --partitions "$${topic##*:}"
+        done
+    restart: "no"
+    labels:
+      io.quarkus.devservices.compose.wait_for.ports.disable: true
+      io.quarkus.devservices.compose.ignore: true
+
+volumes:
+  pgdata:
+    name: incident-assistant-pgdata
+  kafka-data:
+    name: incident-assistant-kafka
