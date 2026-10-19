@@ -33,6 +33,7 @@ New ADRs use `platform/template.md` (skill `write-adr`).
 | [P-0013](platform/P-0013-layered-package-structure.md) | Layered package structure |
 | [P-0014](platform/P-0014-entities-base-entity-and-dtos.md) | Logic-free entities, BaseEntity and DTOs |
 | [P-0015](platform/P-0015-data-access-with-panache-repositories.md) | Data access with Panache repositories |
+| [P-0016](platform/P-0016-local-development-infrastructure.md) | Local development infrastructure |
 
 ## App
 
@@ -45,6 +46,7 @@ New ADRs use `platform/template.md` (skill `write-adr`).
 | [A-0005](app/A-0005-ops-tools-mcp-server.md) | Ops tools MCP server | P-0006 |
 | [A-0006](app/A-0006-approval-api.md) | Human approval REST API | P-0009 |
 | [A-0007](app/A-0007-incident-state-event.md) | Incident state event | P-0012 |
+| [A-0008](app/A-0008-local-development-services.md) | Local development services | P-0016, P-0010 |
 
 ## Former numbering
 
