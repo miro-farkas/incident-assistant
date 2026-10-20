@@ -16,6 +16,7 @@ See `docs/architecture.md`, `docs/adr/` and `docs/backlog.md`.
 |---|---|---|
 | `incident-assistant-app` | The service: ingestion, workflow, AI steps, approval API | 8080 |
 | `ops-tools-mcp` | Mock operations backend exposed as an MCP server | 8081 |
+| `alert-producer` | Manual testing tool: produces alerts to `ops.alerts.v1` (P-0017) | – |
 
 ## Prerequisites
 
@@ -172,6 +173,17 @@ Try it in dev mode with the [MCP Inspector](https://github.com/modelcontextproto
 (`npx @modelcontextprotocol/inspector`, transport "Streamable HTTP"):
 `http://localhost:8081/mcp/read`, or `http://localhost:8081/mcp/actions` with header
 `X-Api-Key: dev-only-actions-key-not-a-secret-0001`.
+
+### Alert producer
+
+For testing load or duplicate handling by hand, `alert-producer` sends generated alerts to
+the local broker at a fixed rate until stopped with Ctrl+C. Rate (`ALERTS_PER_MINUTE`),
+total count and the size of the fingerprint pool are constants at the top of
+`AlertProducer.java`.
+
+```shell
+./mvnw -q -pl alert-producer compile exec:java
+```
 
 ## Run the packaged application
 

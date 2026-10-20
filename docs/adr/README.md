@@ -34,6 +34,7 @@ New ADRs use `platform/template.md` (skill `write-adr`).
 | [P-0014](platform/P-0014-entities-base-entity-and-dtos.md) | Logic-free entities, BaseEntity and DTOs |
 | [P-0015](platform/P-0015-data-access-with-panache-repositories.md) | Data access with Panache repositories |
 | [P-0016](platform/P-0016-local-development-infrastructure.md) | Local development infrastructure |
+| [P-0017](platform/P-0017-manual-testing-tools.md) | Manual testing tools |
 
 ## App
 
