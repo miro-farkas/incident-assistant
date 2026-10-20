@@ -49,6 +49,9 @@ git config core.hooksPath .githooks
 `verify` fails on unformatted code, a Java/Maven version below the minimum, or
 non-converging dependency versions.
 
+`.mvn/maven.config` turns Quarkus build analytics off (`-Dquarkus.analytics.disabled=true`), so
+builds and dev mode never stop to ask about it.
+
 ## Run in dev mode
 
 Each module runs in its own terminal:
