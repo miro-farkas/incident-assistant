@@ -126,6 +126,10 @@ an invalid value stops the application with a message naming the property.
 | `incident.outbox.relay.batch-size` | `INCIDENT_OUTBOX_RELAY_BATCH_SIZE` | `100` | Events per relay transaction (1-1000). |
 | `incident.outbox.relay.send-timeout` | `INCIDENT_OUTBOX_RELAY_SEND_TIMEOUT` | `10s` | Longest wait for the broker to acknowledge one event. |
 | `incident.outbox.relay.max-batch-duration` | `INCIDENT_OUTBOX_RELAY_MAX_BATCH_DURATION` | `10s` | No new send starts in a batch after this time. |
+| `incident.stream.heartbeat-interval` | `INCIDENT_STREAM_HEARTBEAT_INTERVAL` | `15s` | Interval of the heartbeat comment on idle event streams. |
+| `incident.stream.client-buffer-size` | `INCIDENT_STREAM_CLIENT_BUFFER_SIZE` | `256` | Events buffered per stream (1-10000); a client further behind is disconnected. |
+| `incident.stream.max-streams` | `INCIDENT_STREAM_MAX_STREAMS` | `200` | Concurrent event streams per instance; above it `503`. |
+| `incident.stream.retry-after` | `INCIDENT_STREAM_RETRY_AFTER` | `5s` | `Retry-After` sent with that `503` (at least 1 s). |
 
 The schema is managed by Flyway (`incident-assistant-app/src/main/resources/db/migration`)
 and migrated at startup; Hibernate only validates that the entities match it. Readiness
@@ -141,6 +145,7 @@ Problem Details. OpenAPI: `/q/openapi`, Swagger UI in dev mode: `/q/swagger-ui`.
 | `GET /api/v1/incidents?state=…&page=0&size=20` | `incident-viewer` or `incident-approver` | newest first, `state` repeatable |
 | `GET /api/v1/incidents/{id}` | `incident-viewer` or `incident-approver` | alert, steps, decision; `ETag` = version |
 | `POST /api/v1/incidents/{id}/decision` | `incident-approver` | `{"decision": "APPROVE"\|"REJECT", "comment": …}` with `If-Match` |
+| `GET /api/v1/incidents/stream` | `incident-viewer` or `incident-approver` | Server-Sent Events: every state event from now on (A-0009) |
 
 The local realm has two users (passwords as user names, local only): `viewer`
 (`incident-viewer`) and `approver` (both roles). The client `incident-assistant` allows the
@@ -160,13 +165,22 @@ curl -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -H 'I
 Until the AI steps exist (INC-006 to INC-008) no incident reaches `AWAITING_APPROVAL` in a
 real run, so a decision answers `409`.
 
+The event stream forwards each `incident.state-changed` event unchanged (`event:` is the
+event type, `id:` the event id, `data:` the JSON) and sends `: heartbeat` comments while idle.
+Events are hints: a client reloads what it shows when it connects or reconnects; nothing is
+replayed. Watch it while sending alerts (for example with `alert-producer`):
+
+```shell
+curl -N -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/incidents/stream
+```
+
 ### Kafka topics
 
 | Topic | Direction | Format |
 |---|---|---|
 | `ops.alerts.v1` | in | `docs/schemas/alert-v1.json` |
 | `ops.alerts.v1.dlq` | out | rejected alerts, unchanged, reason in header `dead-letter-reason` |
-| `ops.incidents.events.v1` | out | `docs/schemas/incident-event-v1.json`, keyed by incident id |
+| `ops.incidents.events.v1` | out; in for the event stream (group `incident-assistant-stream-<instance id>`, no commits) | `docs/schemas/incident-event-v1.json`, keyed by incident id |
 
 In dev mode, send an alert to the local broker with [kcat](https://github.com/edenhill/kcat):
 

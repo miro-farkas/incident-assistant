@@ -70,6 +70,15 @@ class OpenApiTest {
   }
 
   @Test
+  void streamDocumentsEventStreamAndLimit() {
+    JsonNode stream = operation("/api/v1/incidents/stream", "get");
+
+    assertThat(stream.at("/responses/200/content").has("text/event-stream")).isTrue();
+    assertThat(stream.at("/responses/503/headers").has("Retry-After")).isTrue();
+    assertThat(stream.get("security")).isNotNull();
+  }
+
+  @Test
   void detailDocumentsEtag() {
     assertThat(operation(DETAIL, "get").at("/responses/200/headers").has("ETag")).isTrue();
   }
