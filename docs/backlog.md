@@ -1,6 +1,7 @@
 # Backlog
 
-Implement strictly in order. Each item is a vertical, shippable increment.
+Implement strictly in order — the order of this file, not of the numbers (ids are stable
+once assigned). Each item is a vertical, shippable increment.
 Status: `TODO` → `IN PROGRESS` → `DONE`. Update the status as part of the item.
 
 ---
@@ -55,6 +56,87 @@ Acceptance criteria
   (update ADR with the actual mechanism).
 - Tests for each tool, including error and size-limit behaviour.
 
+## INC-009 Approval REST API — TODO
+Covers A-0006, P-0009.
+
+Acceptance criteria
+- Endpoints, Problem Details, OpenAPI, `If-Match` handling as in A-0006 and P-0009.
+- OIDC with Keycloak; role checks tested (`@TestSecurity`).
+- Local Keycloak in `compose-devservices.yml` as in A-0008: data in schema `keycloak` of
+  the compose PostgreSQL (created by run-once `postgres-init`), kept running and kept
+  across dev mode restarts like the other services; realm with roles, the
+  `incident-assistant` client and one user per role imported from a checked-in file.
+  Tests keep per-run Dev Services.
+- Approver identity from token stored in `approval_decision`.
+- Decision outside `AWAITING_APPROVAL` → 409; stale version → 412.
+- Detail returns the alert, state, version, occurrences count, approval decision and the
+  step history with each step's `output` as stored JSON. Typed step results are added by
+  the items that define them (INC-006 to INC-008).
+- Implemented before the AI steps: tests bring incidents into `AWAITING_APPROVAL` through
+  the service layer; no endpoint or dev shortcut sets states.
+
+## INC-014 Incident event stream (SSE) — TODO
+Covers A-0009, P-0018. Needs INC-009 (OIDC, roles).
+
+Acceptance criteria
+- `GET /api/v1/incidents/stream` as in A-0009; `401` without authentication, `403`
+  without `incident-viewer`.
+- Per-instance consumer of `ops.incidents.events.v1` (own group, latest offset, no
+  commits) fans out every event to all open streams of the instance, unchanged, with
+  `event` and `id` set.
+- Heartbeat comment at the configured interval; a client whose buffer overflows is
+  disconnected without affecting others; above `max-streams` → `503` with `Retry-After`.
+- Configuration `incident.stream.*` as `@ConfigMapping`, validated at startup.
+- Tests: two clients receive an event published to the topic, in order; slow client
+  disconnected; limit enforced; role checks (`@TestSecurity`).
+- README: endpoint and configuration.
+
+## INC-015 Incident UI — TODO
+Covers A-0010, P-0019 (amends P-0009). Needs INC-009 and INC-014.
+
+Acceptance criteria
+- React + TypeScript (Vite) app in `incident-assistant-app/src/main/webui`, built and
+  served by Quinoa; pinned Node.js installed by the build; lock file committed; works in
+  `quarkus:dev` with live reload.
+- OIDC hybrid mode: browser login via code flow with `HttpOnly`/`Secure`/`SameSite=Strict`
+  session cookie, bearer tokens still accepted for machine clients; logout ends both
+  sessions. Keycloak client and one user per role in the local realm.
+- CSRF: state-changing requests without `X-Requested-By` rejected with `403` (tested).
+- `GET /api/v1/me` returns name and `incident-*` roles.
+- Screens list, detail and decision as in A-0010, with live updates from the stream;
+  `412` and `409` handled as described; decision controls only for approvers. The detail
+  screen shows step outputs generically (readable key/value view, text only); typed
+  views follow with INC-006 to INC-008.
+- Untrusted content rendered as text only; strict Content Security Policy sent (tested).
+- API types generated from the OpenAPI document; Vitest + Testing Library component
+  tests run in `./mvnw verify`; one Playwright end-to-end test: login as approver,
+  open an `AWAITING_APPROVAL` incident (prepared by the test through the service layer),
+  approve, state changes to `APPROVED` live.
+- README: how to open the UI locally, users, how the UI is built.
+
+## INC-016 E-mail notifications — TODO
+Covers A-0011, P-0020. Needs INC-009 (API, client credentials).
+
+Acceptance criteria
+- Module `notification-service` with its own schema `notification` in the incident
+  database (Flyway, own history table; no second database) and the platform conventions
+  (layers, DTOs, Panache repositories, ArchUnit rules). Test proves the module's
+  migrations and queries touch only its schema.
+- Consumer of `ops.incidents.events.v1`: event recorded, duplicate (`eventId`) and older
+  version skipped, pending notifications written per rule and recipient in one
+  transaction.
+- Sender job with `SKIP LOCKED`, exponential backoff, max attempts, `FAILED` after the
+  last attempt; safe with two instances.
+- Detail lookup with client credentials (Keycloak service account, `incident-viewer`;
+  client `notification-service` added to the local realm), timeout and fault tolerance;
+  minimal message after the lookup's retries are exhausted.
+- E-mail via `quarkus-mailer`, Qute templates (text and HTML) with the content of A-0011
+  only; Mailpit in `compose-devservices.yml` for dev mode.
+- Tests: duplicate event → one mail; older version → none; lookup failure → minimal mail;
+  SMTP failure → retried, then `FAILED`; end to end: event on the topic → mail in the
+  mock mailbox with the expected subject and link.
+- README: module, configuration, how to see mails locally.
+
 ## INC-005 Knowledge base ingestion (RAG) — TODO
 Covers A-0004, P-0005.
 
@@ -78,6 +160,8 @@ Acceptance criteria
 - Output guardrail validates the result; one reprompt; failure → `ESCALATED`.
 - Fault tolerance and token recording per P-0008.
 - Tests with mocked AI service for success, invalid output, timeout.
+- Incident detail API returns the typed `TriageResult`; the UI shows severity, category,
+  affected service and summary (as text) instead of the generic step view.
 
 ## INC-007 Diagnosis step (bounded autonomous agent) — TODO
 Covers A-0001, A-0004, A-0005, P-0006.
@@ -89,6 +173,8 @@ Acceptance criteria
   confidence). Guardrail requires at least one evidence item with a source.
 - ArchUnit/test asserts no action tool is reachable from any AI service.
 - Tool call trace stored in the step row.
+- Incident detail API returns the typed `Diagnosis`; the UI shows hypothesis, confidence
+  and the evidence list with source references (as text, not links).
 
 ## INC-008 Remediation proposal — TODO
 Acceptance criteria
@@ -97,15 +183,8 @@ Acceptance criteria
 - Guardrail rejects actions not in the allowlist or targets not matching the triaged
   service. Option `NO_ACTION` → `ESCALATED`.
 - Success → `AWAITING_APPROVAL`.
-
-## INC-009 Approval REST API — TODO
-Covers A-0006, P-0009.
-
-Acceptance criteria
-- Endpoints, Problem Details, OpenAPI, `If-Match` handling as in A-0006 and P-0009.
-- OIDC with Keycloak Dev Services; role checks tested (`@TestSecurity`).
-- Approver identity from token stored in `approval_decision`.
-- Decision outside `AWAITING_APPROVAL` → 409; stale version → 412.
+- Incident detail API returns the typed `RemediationProposal`; the UI shows action,
+  target, parameters, rationale and risk next to the decision controls.
 
 ## INC-010 Action execution — TODO
 Acceptance criteria
@@ -140,6 +219,5 @@ Acceptance criteria
 ---
 
 ## Later (not planned yet)
-- Approval UI.
-- Notifications (Slack/e-mail) on `AWAITING_APPROVAL` and `ESCALATED`.
+- Slack notification channel (second channel of the notification service, A-0011).
 - Feedback loop: rejected proposals with comments added to the eval dataset.
