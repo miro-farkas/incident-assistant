@@ -1,0 +1,62 @@
+{
+  "realm": "incident-assistant",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "accessTokenLifespan": 300,
+  "roles": {
+    "realm": [
+      {
+        "name": "incident-viewer",
+        "description": "Reads incidents (A-0006)"
+      },
+      {
+        "name": "incident-approver",
+        "description": "Approves or rejects remediation proposals (A-0006)"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "incident-assistant",
+      "name": "incident-assistant",
+      "description": "incident-assistant-app. Local-only secret; direct access grants only for local manual testing.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "incident-assistant-local-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["http://localhost:8080/*"],
+      "webOrigins": ["http://localhost:8080"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:8080/*"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "viewer",
+      "enabled": true,
+      "email": "viewer@incident-assistant.local",
+      "emailVerified": true,
+      "firstName": "Vera",
+      "lastName": "Viewer",
+      "credentials": [{ "type": "password", "value": "viewer", "temporary": false }],
+      "realmRoles": ["incident-viewer"]
+    },
+    {
+      "username": "approver",
+      "enabled": true,
+      "email": "approver@incident-assistant.local",
+      "emailVerified": true,
+      "firstName": "Arno",
+      "lastName": "Approver",
+      "credentials": [{ "type": "password", "value": "approver", "temporary": false }],
+      "realmRoles": ["incident-viewer", "incident-approver"]
+    }
+  ]
+}

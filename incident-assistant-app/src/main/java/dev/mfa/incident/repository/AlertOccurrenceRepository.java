@@ -7,4 +7,9 @@ import java.util.UUID;
 
 /** Append-only: services only insert occurrence rows. */
 @ApplicationScoped
-public class AlertOccurrenceRepository implements PanacheRepositoryBase<AlertOccurrence, UUID> {}
+public class AlertOccurrenceRepository implements PanacheRepositoryBase<AlertOccurrence, UUID> {
+
+  public long countByIncident(UUID incidentId) {
+    return count("incidentId", incidentId);
+  }
+}

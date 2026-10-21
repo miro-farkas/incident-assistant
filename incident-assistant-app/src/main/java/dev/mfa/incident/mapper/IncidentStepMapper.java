@@ -2,6 +2,7 @@ package dev.mfa.incident.mapper;
 
 import dev.mfa.incident.dto.ModelUsageDto;
 import dev.mfa.incident.dto.ReasonCode;
+import dev.mfa.incident.dto.StepDto;
 import dev.mfa.incident.dto.StepResultDto;
 import dev.mfa.incident.model.IncidentState;
 import dev.mfa.incident.model.IncidentStep;
@@ -42,5 +43,25 @@ public class IncidentStepMapper {
     step.setReasonCode(reasonCode == null ? null : reasonCode.value());
     step.setErrorMessage(result.errorMessage());
     return step;
+  }
+
+  public StepDto toDto(IncidentStep step) {
+    return new StepDto(
+        step.getId(),
+        step.getStepType(),
+        step.getStatus(),
+        step.getFromState(),
+        step.getToState(),
+        step.getStartedAt(),
+        step.getFinishedAt(),
+        step.getDurationMs(),
+        step.getReasonCode(),
+        step.getErrorMessage(),
+        step.getModelId(),
+        step.getPromptId(),
+        step.getPromptVersion(),
+        step.getInputTokens(),
+        step.getOutputTokens(),
+        step.getOutput());
   }
 }

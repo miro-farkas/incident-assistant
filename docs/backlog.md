@@ -56,7 +56,7 @@ Acceptance criteria
   (update ADR with the actual mechanism).
 - Tests for each tool, including error and size-limit behaviour.
 
-## INC-009 Approval REST API — TODO
+## INC-009 Approval REST API — DONE
 Covers A-0006, P-0009.
 
 Acceptance criteria

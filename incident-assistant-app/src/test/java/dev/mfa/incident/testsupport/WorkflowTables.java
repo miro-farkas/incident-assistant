@@ -112,6 +112,36 @@ public class WorkflowTables {
                     .toList());
   }
 
+  /** Columns of one {@code approval_decision} row. */
+  public record DecisionRow(
+      UUID proposalStepId, String decision, String approverSubject, String comment) {}
+
+  /** Approval decisions of one incident, oldest first. */
+  public List<DecisionRow> decisions(UUID incidentId) {
+    return QuarkusTransaction.requiringNew()
+        .call(
+            () ->
+                entityManager
+                    .createNativeQuery(
+                        "select proposal_step_id, decision, approver_subject, comment"
+                            + " from approval_decision where incident_id = :incidentId"
+                            + " order by created_at, id",
+                        Object[].class)
+                    .setParameter("incidentId", incidentId)
+                    .getResultList()
+                    .stream()
+                    .map(
+                        row -> {
+                          Object[] columns = (Object[]) row;
+                          return new DecisionRow(
+                              (UUID) columns[0],
+                              (String) columns[1],
+                              (String) columns[2],
+                              (String) columns[3]);
+                        })
+                    .toList());
+  }
+
   public String alertPayload(UUID incidentId) {
     return QuarkusTransaction.requiringNew()
         .call(

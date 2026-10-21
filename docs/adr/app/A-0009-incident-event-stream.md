@@ -1,6 +1,6 @@
 # A-0009: Incident event stream
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-21
 - Applies: P-0018, P-0009
 
