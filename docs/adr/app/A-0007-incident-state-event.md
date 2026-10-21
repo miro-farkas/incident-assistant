@@ -7,6 +7,8 @@
 ## Context
 Every incident state change writes an event to the outbox (A-0002); the relay publishes it
 to `ops.incidents.events.v1`. Consumers are notifications, dashboards and the future UI.
+Planned consumers (proposed): the notification service (A-0011) and the UI through the
+stream endpoint (A-0009, A-0010).
 
 ## Decision
 - One event type in v1: `incident.state-changed`, emitted for incident creation and every

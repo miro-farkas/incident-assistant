@@ -35,6 +35,9 @@ New ADRs use `platform/template.md` (skill `write-adr`).
 | [P-0015](platform/P-0015-data-access-with-panache-repositories.md) | Data access with Panache repositories |
 | [P-0016](platform/P-0016-local-development-infrastructure.md) | Local development infrastructure |
 | [P-0017](platform/P-0017-manual-testing-tools.md) | Manual testing tools |
+| [P-0018](platform/P-0018-live-updates-via-server-sent-events.md) | Live updates to browser clients via Server-Sent Events |
+| [P-0019](platform/P-0019-web-ui-served-by-the-service.md) | Web UI served by the service |
+| [P-0020](platform/P-0020-event-driven-notification-service.md) | Event-driven notification service |
 
 ## App
 
@@ -48,6 +51,9 @@ New ADRs use `platform/template.md` (skill `write-adr`).
 | [A-0006](app/A-0006-approval-api.md) | Human approval REST API | P-0009 |
 | [A-0007](app/A-0007-incident-state-event.md) | Incident state event | P-0012 |
 | [A-0008](app/A-0008-local-development-services.md) | Local development services | P-0016, P-0010 |
+| [A-0009](app/A-0009-incident-event-stream.md) | Incident event stream | P-0018, P-0009 |
+| [A-0010](app/A-0010-incident-ui.md) | Incident UI | P-0019, P-0018, P-0009 |
+| [A-0011](app/A-0011-notification-service.md) | Notification service | P-0020, P-0012, P-0009, P-0016 |
 
 ## Former numbering
 

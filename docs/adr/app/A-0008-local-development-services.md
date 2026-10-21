@@ -38,6 +38,20 @@ backlog items. Tests start these through Dev Services with the configuration in
   mode application takes precedence over the compose service.
 - Keycloak and Ollama are added to the same file by the backlog items that introduce them;
   Ollama models go into a named volume.
+- Keycloak (added by INC-009, proposed with A-0010):
+  - service `keycloak`, image version pinned to the one the platform's Keycloak Dev
+    Services uses for tests, `start-dev` on host port `8180`;
+  - its data in the schema `keycloak` of the compose PostgreSQL (`KC_DB=postgres`,
+    `KC_DB_SCHEMA=keycloak`), so it lives on the kept `incident-assistant-pgdata` volume;
+    no separate database or volume;
+  - a run-once service `postgres-init` creates the schema with `CREATE SCHEMA IF NOT
+    EXISTS` before Keycloak starts (labels as `kafka-init`, so Quarkus ignores it), which
+    also works for volumes created before the schema existed;
+  - the realm (clients, roles, one user per role) is imported from a checked-in file with
+    `--import-realm`, which skips a realm that already exists, so local changes survive
+    restarts.
+- One database for all modules: each further module gets its own schema in the compose
+  PostgreSQL (for example `notification`, A-0011), never a second database.
 
 ## Alternatives considered
 - `apache/kafka-native` (the current Dev Services image): faster start, but no CLI for
