@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import dev.mfa.incident.exception.DecisionNotAllowedException;
 import dev.mfa.incident.exception.IncidentNotFoundException;
 import dev.mfa.incident.exception.IncidentVersionConflictException;
+import dev.mfa.incident.exception.StreamLimitExceededException;
 import dev.mfa.incident.exception.UnknownIncidentStateException;
 import io.quarkus.security.AuthenticationFailedException;
 import io.quarkus.security.ForbiddenException;
@@ -53,6 +54,13 @@ public class ProblemMappers {
   @ServerExceptionMapper
   public Response decisionNotAllowed(DecisionNotAllowedException e) {
     return problem(Response.Status.CONFLICT, e.getMessage());
+  }
+
+  @ServerExceptionMapper
+  public Response streamLimit(StreamLimitExceededException e) {
+    return Response.fromResponse(problem(Response.Status.SERVICE_UNAVAILABLE, e.getMessage()))
+        .header(HttpHeaders.RETRY_AFTER, e.retryAfter().toSeconds())
+        .build();
   }
 
   @ServerExceptionMapper

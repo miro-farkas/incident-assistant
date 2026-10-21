@@ -75,7 +75,7 @@ Acceptance criteria
 - Implemented before the AI steps: tests bring incidents into `AWAITING_APPROVAL` through
   the service layer; no endpoint or dev shortcut sets states.
 
-## INC-014 Incident event stream (SSE) — TODO
+## INC-014 Incident event stream (SSE) — DONE
 Covers A-0009, P-0018. Needs INC-009 (OIDC, roles).
 
 Acceptance criteria
