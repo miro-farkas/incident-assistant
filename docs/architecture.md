@@ -11,6 +11,8 @@ flowchart LR
     APP -- MCP action tools --> MCP
     APP --> LLM[[LLM provider]]
     H[Human approver] -- REST + OIDC --> APP
+    H -- login --> KC[[Keycloak]]
+    APP -- token validation --> KC
     APP --> KO[(Kafka: ops.incidents.events.v1)]
 ```
 

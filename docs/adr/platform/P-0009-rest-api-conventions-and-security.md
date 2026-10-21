@@ -25,4 +25,4 @@ attributable.
 ## Consequences
 - A future UI uses the same API and OIDC client.
 - Browser clients authenticate with a server-side session instead of bearer tokens
-  (P-0019, proposed).
+  (P-0019).

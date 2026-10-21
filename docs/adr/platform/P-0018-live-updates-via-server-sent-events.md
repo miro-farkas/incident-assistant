@@ -1,6 +1,6 @@
 # P-0018: Live updates to browser clients via Server-Sent Events
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-21
 
 ## Context

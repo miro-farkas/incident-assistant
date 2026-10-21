@@ -7,7 +7,7 @@
 ## Context
 Every incident state change writes an event to the outbox (A-0002); the relay publishes it
 to `ops.incidents.events.v1`. Consumers are notifications, dashboards and the future UI.
-Planned consumers (proposed): the notification service (A-0011) and the UI through the
+Planned consumers: the notification service (A-0011) and the UI through the
 stream endpoint (A-0009, A-0010).
 
 ## Decision
@@ -38,5 +38,9 @@ stream endpoint (A-0009, A-0010).
   `incident.escalated`, …) multiplies schemas without adding information beyond `state`.
 
 ## Consequences
-- `reasonCode` values are documented as they are introduced (INC-006 onwards).
+- `reasonCode` values are documented as they are introduced (INC-006 onwards):
+
+  | Value | State | Meaning |
+  |---|---|---|
+  | `REJECTED_BY_APPROVER` | `REJECTED` | an approver rejected the proposal (A-0006); `step` and `stepId` are `null` |
 - Not in scope: events for non-state changes such as alert occurrences.

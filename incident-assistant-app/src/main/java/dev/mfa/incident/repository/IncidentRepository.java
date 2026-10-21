@@ -5,13 +5,15 @@ import dev.mfa.incident.exception.OpenIncidentExistsException;
 import dev.mfa.incident.model.Incident;
 import dev.mfa.incident.model.IncidentState;
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
+import io.quarkus.panache.common.Page;
+import io.quarkus.panache.common.Sort;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.OptimisticLockException;
 import jakarta.persistence.PersistenceException;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import org.hibernate.exception.ConstraintViolationException;
 
 @ApplicationScoped
 public class IncidentRepository implements PanacheRepositoryBase<Incident, UUID> {
@@ -34,6 +36,21 @@ public class IncidentRepository implements PanacheRepositoryBase<Incident, UUID>
   }
 
   /**
+   * Returns one page of incidents in the given states, newest first; all states when {@code states}
+   * is empty.
+   */
+  public List<Incident> listByStates(Set<IncidentState> states, int pageIndex, int pageSize) {
+    Sort newestFirst = Sort.descending("createdAt").and("id", Sort.Direction.Descending);
+    var query = states.isEmpty() ? findAll(newestFirst) : find("state in ?1", newestFirst, states);
+    return query.page(Page.of(pageIndex, pageSize)).list();
+  }
+
+  /** Number of incidents in the given states; all incidents when {@code states} is empty. */
+  public long countByStates(Set<IncidentState> states) {
+    return states.isEmpty() ? count() : count("state in ?1", states);
+  }
+
+  /**
    * Inserts a new incident immediately, so a competing open incident is reported here instead of at
    * commit.
    *
@@ -45,7 +62,7 @@ public class IncidentRepository implements PanacheRepositoryBase<Incident, UUID>
       persist(incident);
       flush();
     } catch (PersistenceException e) {
-      if (violates(e, OPEN_INCIDENT_INDEX)) {
+      if (ConstraintViolations.violates(e, OPEN_INCIDENT_INDEX)) {
         throw new OpenIncidentExistsException();
       }
       throw e;
@@ -64,14 +81,5 @@ public class IncidentRepository implements PanacheRepositoryBase<Incident, UUID>
     } catch (OptimisticLockException e) {
       throw new IncidentVersionConflictException(incident.getId(), expectedVersion);
     }
-  }
-
-  private static boolean violates(Throwable failure, String constraintName) {
-    for (Throwable t = failure; t != null; t = t.getCause()) {
-      if (t instanceof ConstraintViolationException violation) {
-        return constraintName.equalsIgnoreCase(violation.getConstraintName());
-      }
-    }
-    return false;
   }
 }

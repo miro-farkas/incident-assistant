@@ -1,6 +1,6 @@
 # A-0010: Incident UI
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-21
 - Applies: P-0019, P-0018, P-0009
 

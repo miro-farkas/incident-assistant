@@ -1,6 +1,6 @@
 # P-0019: Web UI served by the service
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-21
 - Amends: P-0009 (authentication of browser clients)
 

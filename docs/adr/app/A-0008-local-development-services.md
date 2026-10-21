@@ -38,7 +38,7 @@ backlog items. Tests start these through Dev Services with the configuration in
   mode application takes precedence over the compose service.
 - Keycloak and Ollama are added to the same file by the backlog items that introduce them;
   Ollama models go into a named volume.
-- Keycloak (added by INC-009, proposed with A-0010):
+- Keycloak (added by INC-009):
   - service `keycloak`, image version pinned to the one the platform's Keycloak Dev
     Services uses for tests, `start-dev` on host port `8180`;
   - its data in the schema `keycloak` of the compose PostgreSQL (`KC_DB=postgres`,

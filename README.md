@@ -24,9 +24,9 @@ See `docs/architecture.md`, `docs/adr/` and `docs/backlog.md`.
 - No local Maven needed: use the Maven Wrapper (`./mvnw`, or `mvnw.cmd` on Windows).
   The build enforces Java 25+ and Maven 3.9.9+.
 - A Docker-compatible container runtime with Docker Compose v2. Dev mode of
-  `incident-assistant-app` runs PostgreSQL (`pgvector/pgvector:pg17`) and Kafka from
-  `compose-devservices.yml`; tests start their own empty containers through Dev Services.
-  Keycloak and Ollama follow with later backlog items.
+  `incident-assistant-app` runs PostgreSQL (`pgvector/pgvector:pg17`), Kafka and Keycloak
+  from `compose-devservices.yml`; tests start their own empty containers through Dev
+  Services. Ollama follows with a later backlog item.
 
 ## Git workflow
 
@@ -75,9 +75,13 @@ and starts faster.
 |---|---|---|
 | PostgreSQL | `localhost:5432`, database `incident`, user/password `incident` | local-only credentials |
 | Kafka | `localhost:9092` (containers on the compose network: `kafka:19092`) | single node, KRaft; topic auto-creation off |
+| Keycloak | `http://localhost:8180`, realm `incident-assistant`; admin console user/password `admin` | data in schema `keycloak` of PostgreSQL |
 
-`kafka-init` creates the topics once the broker is healthy and exits. Manage the services
-with the Docker Compose CLI:
+`kafka-init` creates the topics once the broker is healthy and exits; `postgres-init`
+creates the `keycloak` schema before Keycloak starts. Keycloak imports
+`keycloak/realm-incident-assistant.json` on its first start only, so changes made in the
+admin console survive restarts; to re-import the file, drop the schema or start clean.
+Manage the services with the Docker Compose CLI:
 
 ```shell
 docker compose -f compose-devservices.yml ps        # state
@@ -113,6 +117,8 @@ an invalid value stops the application with a message naming the property.
 | `quarkus.datasource.jdbc.additional-jdbc-properties.socketTimeout` | | `30` (seconds) | Client-side limit for a blocked socket read. |
 | `quarkus.transaction-manager.default-transaction-timeout` | `QUARKUS_TRANSACTION_MANAGER_DEFAULT_TRANSACTION_TIMEOUT` | `30S` | Maximum duration of a transaction. |
 | `kafka.bootstrap.servers` | `KAFKA_BOOTSTRAP_SERVERS` | dev: `compose-devservices.yml`; test: Dev Services; prod: required | Kafka brokers. |
+| `quarkus.oidc.auth-server-url` | `OIDC_AUTH_SERVER_URL` | dev: compose Keycloak, realm `incident-assistant`; test: off (`@TestSecurity`); prod: required | Issuer of the bearer tokens, for example `https://sso.example.com/realms/incident-assistant`. Roles from `realm_access.roles`; the approver identity is the token `sub`. |
+| `quarkus.oidc.client-id` | `QUARKUS_OIDC_CLIENT_ID` | `incident-assistant` | Client of the service in the identity provider. |
 | `incident.alerts.max-payload-bytes` | `INCIDENT_ALERTS_MAX_PAYLOAD_BYTES` | `65536` | Largest accepted alert message; larger ones go to the DLQ unparsed. |
 | `smallrye.messaging.worker.<virtual-thread>.max-concurrency` | | `8` | Alerts processed at the same time; keep it below the connection pool size. |
 | `quarkus.fault-tolerance."dev.mfa.incident.service.AlertIngestionService/ingest".retry.*` | | 3 retries, 500 ms delay, 30 s total | Retries of an alert after a processing failure, before it goes to the DLQ. |
@@ -124,6 +130,35 @@ an invalid value stops the application with a message naming the property.
 The schema is managed by Flyway (`incident-assistant-app/src/main/resources/db/migration`)
 and migrated at startup; Hibernate only validates that the entities match it. Readiness
 (`/q/health/ready`) includes the database and Kafka.
+
+### Approval API
+
+REST API under `/api/v1/incidents` (A-0006), bearer tokens from Keycloak, errors as RFC 9457
+Problem Details. OpenAPI: `/q/openapi`, Swagger UI in dev mode: `/q/swagger-ui`.
+
+| Endpoint | Role | |
+|---|---|---|
+| `GET /api/v1/incidents?state=…&page=0&size=20` | `incident-viewer` or `incident-approver` | newest first, `state` repeatable |
+| `GET /api/v1/incidents/{id}` | `incident-viewer` or `incident-approver` | alert, steps, decision; `ETag` = version |
+| `POST /api/v1/incidents/{id}/decision` | `incident-approver` | `{"decision": "APPROVE"\|"REJECT", "comment": …}` with `If-Match` |
+
+The local realm has two users (passwords as user names, local only): `viewer`
+(`incident-viewer`) and `approver` (both roles). The client `incident-assistant` allows the
+password grant for local manual testing:
+
+```shell
+TOKEN=$(curl -s -X POST http://localhost:8180/realms/incident-assistant/protocol/openid-connect/token \
+  -d grant_type=password -d client_id=incident-assistant \
+  -d client_secret=incident-assistant-local-secret -d username=approver -d password=approver \
+  | jq -r .access_token)
+curl -i -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/incidents/<id>
+curl -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -H 'If-Match: "<version>"' \
+  -d '{"decision": "APPROVE", "comment": "Rollback is safe"}' \
+  http://localhost:8080/api/v1/incidents/<id>/decision
+```
+
+Until the AI steps exist (INC-006 to INC-008) no incident reaches `AWAITING_APPROVAL` in a
+real run, so a decision answers `409`.
 
 ### Kafka topics
 

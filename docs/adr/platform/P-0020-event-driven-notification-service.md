@@ -1,6 +1,6 @@
 # P-0020: Event-driven notification service
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-21
 
 ## Context

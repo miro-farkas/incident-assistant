@@ -1,6 +1,6 @@
 # A-0011: Notification service
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-21
 - Applies: P-0020, P-0012, P-0009, P-0016
 
