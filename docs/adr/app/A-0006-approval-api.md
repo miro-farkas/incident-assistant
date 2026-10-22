@@ -12,7 +12,9 @@ already be safe to expose.
 - Endpoints under `/api/v1/incidents`:
   - `GET /` — list, newest first, filter by state (`state`, repeatable; all states when
     absent), paging (`page` from 0, `size` 1–100, default 20). Response
-    `{items, page, size, totalItems, totalPages}`; an unknown state is `400`.
+    `{items, page, size, totalItems, totalPages}`; an unknown state is `400`. Each item has
+    id, source, fingerprint, state, version, timestamps and `occurrenceCount` (as in the
+    detail), counted for the whole page in one query (amended by INC-018).
   - `GET /{id}` — incident detail: alert as received, state, version, occurrences count,
     step history with each step's output as stored JSON, and the decision (or `null`).
     `ETag` is the version in quotes, for example `"3"`.

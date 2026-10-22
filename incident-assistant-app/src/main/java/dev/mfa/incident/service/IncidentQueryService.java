@@ -2,8 +2,8 @@ package dev.mfa.incident.service;
 
 import dev.mfa.incident.dto.ApprovalDecisionDto;
 import dev.mfa.incident.dto.IncidentDetailDto;
-import dev.mfa.incident.dto.IncidentDto;
 import dev.mfa.incident.dto.IncidentPageDto;
+import dev.mfa.incident.dto.IncidentSummaryDto;
 import dev.mfa.incident.dto.StepDto;
 import dev.mfa.incident.exception.IncidentNotFoundException;
 import dev.mfa.incident.exception.UnknownIncidentStateException;
@@ -21,6 +21,7 @@ import jakarta.transaction.Transactional;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -74,8 +75,16 @@ public class IncidentQueryService {
       throw new IllegalArgumentException("size must be between 1 and " + MAX_PAGE_SIZE);
     }
     long total = incidents.countByStates(states);
-    List<IncidentDto> items =
-        incidents.listByStates(states, page, size).stream().map(incidentMapper::toDto).toList();
+    List<Incident> found = incidents.listByStates(states, page, size);
+    Map<UUID, Long> occurrenceCounts =
+        occurrences.countByIncidents(found.stream().map(Incident::getId).toList());
+    List<IncidentSummaryDto> items =
+        found.stream()
+            .map(
+                incident ->
+                    incidentMapper.toSummaryDto(
+                        incident, occurrenceCounts.getOrDefault(incident.getId(), 0L)))
+            .toList();
     int totalPages = Math.toIntExact((total + size - 1) / size);
     return new IncidentPageDto(items, page, size, total, totalPages);
   }

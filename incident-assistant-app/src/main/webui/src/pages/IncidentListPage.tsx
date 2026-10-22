@@ -9,6 +9,7 @@ import {
 } from "../api/types";
 import { StateBadge } from "../components/StateBadge";
 import { formatTimestamp, stateLabel } from "../format";
+import { OCCURRENCE_RECORDED } from "../live/events";
 import { useLiveEvent, useLiveEvents } from "../live/LiveEvents";
 
 export const PAGE_SIZE = 20;
@@ -34,6 +35,8 @@ export function IncidentListPage() {
   const { connection } = useLiveEvents();
   const [result, setResult] = useState<IncidentPage | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Counts from occurrence events; a row shows the higher of this and the loaded count (A-0012).
+  const [liveCounts, setLiveCounts] = useState<Record<string, number>>({});
   const reloadTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const latestRequest = useRef(0);
 
@@ -58,7 +61,13 @@ export function IncidentListPage() {
   useEffect(() => load(), [load, connection]);
   useEffect(() => () => clearTimeout(reloadTimer.current), []);
 
-  useLiveEvent(() => {
+  useLiveEvent((event) => {
+    if (event.eventType === OCCURRENCE_RECORDED) {
+      setLiveCounts((counts) => ({
+        ...counts,
+        [event.incidentId]: Math.max(counts[event.incidentId] ?? 0, event.occurrenceCount),
+      }));
+    }
     clearTimeout(reloadTimer.current);
     reloadTimer.current = setTimeout(load, RELOAD_DELAY_MS);
   });
@@ -124,6 +133,9 @@ export function IncidentListPage() {
               <th scope="col">Fingerprint</th>
               <th scope="col">Created</th>
               <th scope="col">Updated</th>
+              <th scope="col" className="count">
+                Occurrences
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -142,6 +154,9 @@ export function IncidentListPage() {
                 </td>
                 <td>{formatTimestamp(incident.createdAt)}</td>
                 <td>{formatTimestamp(incident.updatedAt)}</td>
+                <td className="count" data-testid={`occurrences-${incident.id}`}>
+                  {Math.max(incident.occurrenceCount ?? 0, liveCounts[incident.id ?? ""] ?? 0)}
+                </td>
               </tr>
             ))}
           </tbody>

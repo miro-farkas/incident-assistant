@@ -3,6 +3,7 @@ package dev.mfa.incident.mapper;
 import dev.mfa.incident.dto.ApprovalDecisionDto;
 import dev.mfa.incident.dto.IncidentDetailDto;
 import dev.mfa.incident.dto.IncidentDto;
+import dev.mfa.incident.dto.IncidentSummaryDto;
 import dev.mfa.incident.dto.NewIncidentDto;
 import dev.mfa.incident.dto.StepDto;
 import dev.mfa.incident.model.Incident;
@@ -30,6 +31,18 @@ public class IncidentMapper {
         incident.getVersion(),
         incident.getCreatedAt(),
         incident.getUpdatedAt());
+  }
+
+  public IncidentSummaryDto toSummaryDto(Incident incident, long occurrenceCount) {
+    return new IncidentSummaryDto(
+        incident.getId(),
+        incident.getSource(),
+        incident.getFingerprint(),
+        incident.getState(),
+        incident.getVersion(),
+        incident.getCreatedAt(),
+        incident.getUpdatedAt(),
+        occurrenceCount);
   }
 
   /**

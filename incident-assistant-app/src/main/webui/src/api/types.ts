@@ -5,7 +5,7 @@ import type { components } from "./schema";
 type Schemas = components["schemas"];
 
 export type IncidentState = Schemas["IncidentState"];
-export type Incident = Schemas["IncidentDto"];
+export type Incident = Schemas["IncidentSummaryDto"];
 export type IncidentPage = Schemas["IncidentPageDto"];
 export type IncidentDetail = Schemas["IncidentDetailDto"];
 export type Step = Schemas["StepDto"];

@@ -245,3 +245,8 @@ button.reject {
   border-left: 4px solid var(--attention-border);
   background: var(--attention-bg);
 }
+
+.incidents .count {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
