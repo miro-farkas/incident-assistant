@@ -23,6 +23,9 @@ See `docs/architecture.md`, `docs/adr/` and `docs/backlog.md`.
 - JDK 25 (`JAVA_HOME` pointing to it).
 - No local Maven needed: use the Maven Wrapper (`./mvnw`, or `mvnw.cmd` on Windows).
   The build enforces Java 25+ and Maven 3.9.9+.
+- No local Node.js needed: the build installs the pinned version for the web UI (see
+  [Web UI](#web-ui)). The first build downloads Node.js, the npm packages and, for the browser
+  test, Chromium.
 - A Docker-compatible container runtime with Docker Compose v2. Dev mode of
   `incident-assistant-app` runs PostgreSQL (`pgvector/pgvector:pg17`), Kafka and Keycloak
   from `compose-devservices.yml`; tests start their own empty containers through Dev
@@ -137,8 +140,8 @@ and migrated at startup; Hibernate only validates that the entities match it. Re
 
 ### Approval API
 
-REST API under `/api/v1/incidents` (A-0006), bearer tokens from Keycloak, errors as RFC 9457
-Problem Details. OpenAPI: `/q/openapi`, Swagger UI in dev mode: `/q/swagger-ui`.
+REST API under `/api/v1/incidents` (A-0006), bearer tokens from Keycloak (the web UI uses a
+session cookie instead, see [Web UI](#web-ui)), errors as RFC 9457 Problem Details. OpenAPI: `/q/openapi`, Swagger UI in dev mode: `/q/swagger-ui`.
 
 | Endpoint | Role | |
 |---|---|---|
@@ -146,6 +149,7 @@ Problem Details. OpenAPI: `/q/openapi`, Swagger UI in dev mode: `/q/swagger-ui`.
 | `GET /api/v1/incidents/{id}` | `incident-viewer` or `incident-approver` | alert, steps, decision; `ETag` = version |
 | `POST /api/v1/incidents/{id}/decision` | `incident-approver` | `{"decision": "APPROVE"\|"REJECT", "comment": …}` with `If-Match` |
 | `GET /api/v1/incidents/stream` | `incident-viewer` or `incident-approver` | Server-Sent Events: every incident event from now on (A-0009) |
+| `GET /api/v1/me` | any authenticated user | display name and `incident-*` roles |
 
 The local realm has two users (passwords as user names, local only): `viewer`
 (`incident-viewer`) and `approver` (both roles). The client `incident-assistant` allows the
@@ -173,6 +177,50 @@ replayed. Watch it while sending alerts (for example with `alert-producer`):
 ```shell
 curl -N -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/incidents/stream
 ```
+
+### Web UI
+
+The incident UI (A-0010, P-0019) is a React + TypeScript app in
+`incident-assistant-app/src/main/webui`, built with Vite and served by the service through
+Quarkus Quinoa on the same origin as the API.
+
+- Open `http://localhost:8080` while `./mvnw quarkus:dev -pl incident-assistant-app` runs and sign
+  in as `approver`/`approver` (sees the decision buttons) or `viewer`/`viewer` (reads only). Dev
+  mode starts the Vite dev server (port 5173) behind the service, so UI changes reload live.
+- Screens: incident list (filter by state, open states by default, paging, `AWAITING_APPROVAL`
+  highlighted), detail (alert, steps with their output as key/value text, occurrences count,
+  decision) and the decision itself (approve or reject with an optional comment). Both screens
+  update live from the event stream; the header shows the stream state.
+- Login: the UI calls `GET /api/v1/me`; without a session it sends the browser to `/login`, where
+  the service runs the OIDC code flow with Keycloak and sets an encrypted `HttpOnly`, `Secure`,
+  `SameSite=Strict` session cookie (`q_session`); no token reaches JavaScript. "Sign out" (`/logout`)
+  ends the session of the service and the Keycloak session. Bearer tokens keep working on all API
+  endpoints.
+- CSRF: a state-changing request authenticated by the session cookie must carry
+  `X-Requested-By: incident-ui` (the UI sets it); without it the service answers `403`.
+- Every response except `/q/*` carries a strict `Content-Security-Policy` (scripts, styles and
+  connections only from the service itself, no inline code, no framing); dev mode relaxes it for
+  the Vite dev server.
+
+How the UI is built:
+
+- Quinoa installs the pinned Node.js (`quarkus.quinoa.package-manager-install.node-version`) into
+  `incident-assistant-app/.quinoa` and runs `npm ci` with the committed `package-lock.json`; no local
+  Node.js is needed. `./mvnw package`/`verify` also runs the UI tests (`npm test`: type check and
+  Vitest with Testing Library).
+- API types are generated with `openapi-typescript` from the snapshot
+  `src/main/webui/openapi/incident-assistant.json`. `OpenApiTest` compares the snapshot with the
+  service's OpenAPI document; when the API changed it rewrites the snapshot and fails, so review
+  the diff and build again. A change that breaks the UI then fails its type check.
+- `IncidentUiEndToEndTest` (test package `dev.mfa.incident.webui`) drives the UI with Playwright
+  (Chromium, downloaded on first use) against a Keycloak Dev Service: login, approve, the list in
+  a second tab changes to `APPROVED` live; session cookie, CSRF header, CSP and logout.
+- To work on the UI alone: `cd incident-assistant-app/src/main/webui`, then `npm ci` and `npm test`
+  (needs Node.js 24 on the path, or the one Quinoa installed in `incident-assistant-app/.quinoa/node`).
+
+| Property | Environment variable | Default | Description |
+|---|---|---|---|
+| `quarkus.oidc.credentials.secret` | `OIDC_CLIENT_SECRET` | dev: local realm secret; prod: required | Secret of the confidential client `incident-assistant`, used to redeem the login code. Also derives the keys of the state and session cookies; use at least 32 characters, otherwise the state key is generated per instance and a login started on one instance fails on another. |
 
 ### Kafka topics
 

@@ -1,0 +1,247 @@
+:root {
+  --fg: #1d232b;
+  --muted: #5b6573;
+  --bg: #ffffff;
+  --panel: #f4f6f8;
+  --border: #d5dae1;
+  --accent: #1f5fbf;
+  --attention-bg: #fff4d6;
+  --attention-border: #e0a500;
+  --ok: #1d7a3e;
+  --bad: #b3261e;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--fg);
+  background: var(--bg);
+  line-height: 1.45;
+}
+
+body {
+  margin: 0;
+}
+
+main,
+.splash {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.app-header {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.app-title {
+  font-weight: 600;
+  color: var(--fg);
+  text-decoration: none;
+  margin-right: auto;
+}
+
+.roles {
+  color: var(--muted);
+}
+
+.live {
+  font-size: 0.85rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+}
+
+.live-live {
+  color: var(--ok);
+  border-color: var(--ok);
+}
+
+.live-offline {
+  color: var(--bad);
+  border-color: var(--bad);
+}
+
+a {
+  color: var(--accent);
+}
+
+.filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.filter label {
+  white-space: nowrap;
+}
+
+.filter-presets {
+  display: inline-flex;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+table.incidents {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.incidents th,
+.incidents td {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+
+.incidents tr.awaiting-approval {
+  background: var(--attention-bg);
+  box-shadow: inset 4px 0 0 var(--attention-border);
+}
+
+.state {
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.state-awaiting-approval {
+  color: #8a5a00;
+}
+
+.state-approved,
+.state-resolved {
+  color: var(--ok);
+}
+
+.state-rejected,
+.state-escalated,
+.state-failed {
+  color: var(--bad);
+}
+
+.paging {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.5rem 1.5rem;
+}
+
+.facts dt,
+.json-entry dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.facts dd,
+.json-entry dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.json-object {
+  margin: 0;
+  padding-left: 0.6rem;
+  border-left: 2px solid var(--border);
+}
+
+.json-list {
+  margin: 0;
+  padding-left: 1.4rem;
+}
+
+.json-null {
+  color: var(--muted);
+}
+
+.steps {
+  list-style: none;
+  padding: 0;
+}
+
+.step {
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.8rem;
+}
+
+.step h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
+}
+
+.decision-panel {
+  border: 1px solid var(--attention-border);
+  background: var(--attention-bg);
+  border-radius: 0.4rem;
+  padding: 0.6rem 0.8rem;
+  margin: 1rem 0;
+}
+
+.decision-panel h2 {
+  margin-top: 0;
+}
+
+.decision-panel label {
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+.decision-panel textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+}
+
+.decision-buttons {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+
+button {
+  font: inherit;
+  padding: 0.3rem 0.9rem;
+  border-radius: 0.3rem;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+button.approve {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
+button.reject {
+  border-color: var(--bad);
+  color: var(--bad);
+}
+
+.error {
+  color: var(--bad);
+}
+
+.notice {
+  padding: 0.5rem 0.8rem;
+  border-left: 4px solid var(--attention-border);
+  background: var(--attention-bg);
+}

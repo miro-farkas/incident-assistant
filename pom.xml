@@ -32,6 +32,10 @@
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.version>3.40.1</quarkus.platform.version>
 
+        <!-- Quarkiverse extensions not in the Quarkus platform BOM -->
+        <quinoa.version>2.9.3</quinoa.version>
+        <playwright.version>2.3.10</playwright.version>
+
         <!-- Test libraries not managed by the Quarkus platform BOM -->
         <archunit.version>1.5.1</archunit.version>
         <assertj.version>3.27.7</assertj.version>
@@ -60,6 +64,16 @@
                 <version>${quarkus.platform.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.quarkiverse.quinoa</groupId>
+                <artifactId>quarkus-quinoa</artifactId>
+                <version>${quinoa.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.quarkiverse.playwright</groupId>
+                <artifactId>quarkus-playwright</artifactId>
+                <version>${playwright.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.tngtech.archunit</groupId>

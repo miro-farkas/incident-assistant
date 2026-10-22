@@ -42,7 +42,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.resteasy.reactive.RestResponse;
 
 /** Approval API (A-0006): maps HTTP to {@link IncidentQueryService} and {@link IncidentService}. */
-@Path("/api/v1/incidents")
+@Path("/v1/incidents")
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Incidents")
 @APIResponse(
@@ -103,11 +103,11 @@ public class IncidentResource {
   @Produces(MediaType.SERVER_SENT_EVENTS)
   @RolesAllowed({Roles.VIEWER, Roles.APPROVER})
   @Operation(
-      summary = "Live incident state events (Server-Sent Events)",
+      summary = "Live incident events (Server-Sent Events)",
       description =
-          "Every incident.state-changed event from now on, unchanged (event = eventType, id ="
-              + " eventId), plus heartbeat comments. Events are hints: reload what you show on"
-              + " (re)connect; there is no replay.")
+          "Every incident.state-changed and incident.occurrence-recorded event from now on,"
+              + " unchanged (event = eventType, id = eventId), plus heartbeat comments. Events"
+              + " are hints: reload what you show on (re)connect; there is no replay.")
   @APIResponse(responseCode = "200", description = "Event stream")
   @APIResponse(
       responseCode = "503",
