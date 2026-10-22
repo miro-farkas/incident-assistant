@@ -91,7 +91,7 @@ Acceptance criteria
   disconnected; limit enforced; role checks (`@TestSecurity`).
 - README: endpoint and configuration.
 
-## INC-017 Alert occurrence event — IN PROGRESS
+## INC-017 Alert occurrence event — DONE
 Covers A-0012 (amends A-0003 and A-0007; extends P-0012). Needs INC-003 (occurrences,
 outbox relay) and INC-014 (stream).
 

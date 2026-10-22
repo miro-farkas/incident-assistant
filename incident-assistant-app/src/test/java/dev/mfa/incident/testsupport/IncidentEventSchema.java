@@ -17,13 +17,16 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
- * Checks events against {@code docs/schemas/incident-event-v1.json}. Supports the subset of JSON
- * Schema keywords the document uses: type, const, enum, pattern, format (uuid, date-time), minimum
- * and required.
+ * Checks events against the schemas of the event types on {@code ops.incidents.events.v1}: {@code
+ * docs/schemas/incident-event-v1.json} (A-0007) and {@code
+ * docs/schemas/incident-occurrence-event-v1.json} (A-0012). Supports the subset of JSON Schema
+ * keywords the documents use: type, const, enum, pattern, format (uuid, date-time), minimum and
+ * required.
  */
 public final class IncidentEventSchema {
 
-  private static final String RESOURCE = "/schemas/incident-event-v1.json";
+  private static final String STATE_EVENT = "/schemas/incident-event-v1.json";
+  private static final String OCCURRENCE_EVENT = "/schemas/incident-occurrence-event-v1.json";
 
   private final JsonNode schema;
 
@@ -31,9 +34,19 @@ public final class IncidentEventSchema {
     this.schema = schema;
   }
 
+  /** Schema of {@code incident.state-changed}. */
   public static IncidentEventSchema load(ObjectMapper objectMapper) {
-    try (InputStream in = IncidentEventSchema.class.getResourceAsStream(RESOURCE)) {
-      assertThat(in).as("schema resource %s", RESOURCE).isNotNull();
+    return load(objectMapper, STATE_EVENT);
+  }
+
+  /** Schema of {@code incident.occurrence-recorded}. */
+  public static IncidentEventSchema loadOccurrence(ObjectMapper objectMapper) {
+    return load(objectMapper, OCCURRENCE_EVENT);
+  }
+
+  private static IncidentEventSchema load(ObjectMapper objectMapper, String resource) {
+    try (InputStream in = IncidentEventSchema.class.getResourceAsStream(resource)) {
+      assertThat(in).as("schema resource %s", resource).isNotNull();
       return new IncidentEventSchema(objectMapper.readTree(in));
     } catch (IOException e) {
       throw new UncheckedIOException(e);
