@@ -7,17 +7,17 @@ import static org.hamcrest.Matchers.equalTo;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.mfa.incident.dto.IncidentDto;
+import dev.mfa.incident.testsupport.RealKeycloakProfile;
 import dev.mfa.incident.testsupport.WorkflowDriver;
 import dev.mfa.incident.testsupport.WorkflowTables;
 import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
 import io.quarkus.test.keycloak.client.KeycloakTestClient;
 import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.Map;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -26,27 +26,10 @@ import org.junit.jupiter.api.Test;
  * mapping of token claims are verified end to end.
  */
 @QuarkusTest
-@TestProfile(KeycloakRealmTest.RealKeycloak.class)
+@TestProfile(RealKeycloakProfile.class)
 class KeycloakRealmTest {
 
-  private static final String CLIENT = "incident-assistant";
-  private static final String CLIENT_SECRET = "incident-assistant-local-secret";
   private static final String INCIDENTS = "/api/v1/incidents";
-
-  public static class RealKeycloak implements QuarkusTestProfile {
-    @Override
-    public Map<String, String> getConfigOverrides() {
-      return Map.of(
-          // Keycloak's first start (database init) can exceed the 60 s default, and creating the
-          // realm with its users through the admin API the 4 s default.
-          "quarkus.devservices.timeout", "3M",
-          "quarkus.keycloak.devservices.web-client-timeout", "60S",
-          "quarkus.keycloak.devservices.enabled", "true",
-          "quarkus.keycloak.devservices.realm-path", "../keycloak/realm-incident-assistant.json",
-          "quarkus.oidc.tenant-enabled", "true",
-          "quarkus.oidc.credentials.secret", CLIENT_SECRET);
-    }
-  }
 
   private final KeycloakTestClient keycloak = new KeycloakTestClient();
 
@@ -99,6 +82,19 @@ class KeycloakRealmTest {
   }
 
   @Test
+  void meShowsTheProfileNameAndOnlyIncidentRoles() {
+    given()
+        .auth()
+        .oauth2(token("approver"))
+        .when()
+        .get("/api/v1/me")
+        .then()
+        .statusCode(200)
+        .body("name", equalTo("Arno Approver"))
+        .body("roles", equalTo(List.of("incident-approver", "incident-viewer")));
+  }
+
+  @Test
   void invalidTokenIsUnauthorized() {
     given()
         .auth()
@@ -112,7 +108,8 @@ class KeycloakRealmTest {
   }
 
   private String token(String user) {
-    return keycloak.getAccessToken(user, user, CLIENT, CLIENT_SECRET);
+    return keycloak.getAccessToken(
+        user, user, RealKeycloakProfile.CLIENT, RealKeycloakProfile.CLIENT_SECRET);
   }
 
   private String claim(String token, String name) throws Exception {

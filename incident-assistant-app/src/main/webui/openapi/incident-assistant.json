@@ -1,0 +1,606 @@
+{
+  "openapi" : "3.1.0",
+  "tags" : [ {
+    "name" : "Incidents"
+  }, {
+    "name" : "User"
+  } ],
+  "components" : {
+    "schemas" : {
+      "ApprovalDecisionDto" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "$ref" : "#/components/schemas/UUID"
+          },
+          "proposalStepId" : {
+            "$ref" : "#/components/schemas/UUID"
+          },
+          "decision" : {
+            "$ref" : "#/components/schemas/Decision"
+          },
+          "approverSubject" : {
+            "type" : "string"
+          },
+          "comment" : {
+            "type" : "string"
+          },
+          "decidedAt" : {
+            "$ref" : "#/components/schemas/Instant"
+          }
+        }
+      },
+      "CurrentUserDto" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "roles" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "Decision" : {
+        "type" : "string",
+        "enum" : [ "APPROVE", "REJECT" ]
+      },
+      "DecisionDto" : {
+        "type" : "object",
+        "required" : [ "decision" ],
+        "properties" : {
+          "decision" : {
+            "$ref" : "#/components/schemas/Decision"
+          },
+          "comment" : {
+            "type" : "string",
+            "maxLength" : 2000
+          }
+        }
+      },
+      "IncidentDetailDto" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "$ref" : "#/components/schemas/UUID"
+          },
+          "source" : {
+            "type" : "string"
+          },
+          "fingerprint" : {
+            "type" : "string"
+          },
+          "state" : {
+            "$ref" : "#/components/schemas/IncidentState"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createdAt" : {
+            "$ref" : "#/components/schemas/Instant"
+          },
+          "updatedAt" : {
+            "$ref" : "#/components/schemas/Instant"
+          },
+          "alert" : {
+            "description" : "The alert as received (alert-v1)",
+            "type" : "object"
+          },
+          "occurrenceCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "steps" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/StepDto"
+            }
+          },
+          "decision" : {
+            "$ref" : "#/components/schemas/ApprovalDecisionDto"
+          }
+        }
+      },
+      "IncidentDto" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "$ref" : "#/components/schemas/UUID"
+          },
+          "source" : {
+            "type" : "string"
+          },
+          "fingerprint" : {
+            "type" : "string"
+          },
+          "state" : {
+            "$ref" : "#/components/schemas/IncidentState"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createdAt" : {
+            "$ref" : "#/components/schemas/Instant"
+          },
+          "updatedAt" : {
+            "$ref" : "#/components/schemas/Instant"
+          }
+        }
+      },
+      "IncidentPageDto" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/IncidentDto"
+            }
+          },
+          "page" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "size" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "totalItems" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "IncidentState" : {
+        "type" : "string",
+        "enum" : [ "RECEIVED", "TRIAGED", "DIAGNOSED", "AWAITING_APPROVAL", "APPROVED", "REJECTED", "RESOLVED", "ESCALATED", "FAILED" ]
+      },
+      "Instant" : {
+        "type" : "string",
+        "format" : "date-time",
+        "examples" : [ "2022-03-10T16:15:50Z" ]
+      },
+      "MediaType" : {
+        "type" : "object",
+        "properties" : {
+          "type" : {
+            "type" : "string"
+          },
+          "subtype" : {
+            "type" : "string"
+          },
+          "parameters" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "hash" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "wildcardType" : {
+            "type" : "boolean"
+          },
+          "wildcardSubtype" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "OutboundSseEvent" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "comment" : {
+            "type" : "string"
+          },
+          "reconnectDelay" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "reconnectDelaySet" : {
+            "type" : "boolean"
+          },
+          "type" : {
+            "type" : "object"
+          },
+          "genericType" : {
+            "type" : "object"
+          },
+          "mediaType" : {
+            "$ref" : "#/components/schemas/MediaType"
+          },
+          "data" : { }
+        }
+      },
+      "StepDto" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "$ref" : "#/components/schemas/UUID"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/StepType"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/StepStatus"
+          },
+          "fromState" : {
+            "$ref" : "#/components/schemas/IncidentState"
+          },
+          "toState" : {
+            "$ref" : "#/components/schemas/IncidentState"
+          },
+          "startedAt" : {
+            "$ref" : "#/components/schemas/Instant"
+          },
+          "finishedAt" : {
+            "$ref" : "#/components/schemas/Instant"
+          },
+          "durationMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "reasonCode" : {
+            "type" : "string"
+          },
+          "errorMessage" : {
+            "type" : "string"
+          },
+          "modelId" : {
+            "type" : "string"
+          },
+          "promptId" : {
+            "type" : "string"
+          },
+          "promptVersion" : {
+            "type" : "string"
+          },
+          "inputTokens" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "outputTokens" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "output" : {
+            "description" : "Step output as stored, any JSON value",
+            "type" : "object"
+          }
+        }
+      },
+      "StepStatus" : {
+        "type" : "string",
+        "enum" : [ "SUCCEEDED", "FAILED" ]
+      },
+      "StepType" : {
+        "type" : "string",
+        "enum" : [ "TRIAGE", "DIAGNOSIS", "PROPOSAL", "EXECUTION" ]
+      },
+      "UUID" : {
+        "type" : "string",
+        "format" : "uuid",
+        "pattern" : "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
+      }
+    },
+    "securitySchemes" : {
+      "SecurityScheme" : {
+        "description" : "Authentication",
+        "type" : "http",
+        "scheme" : "bearer",
+        "bearerFormat" : "JWT"
+      }
+    }
+  },
+  "paths" : {
+    "/api/v1/incidents" : {
+      "get" : {
+        "summary" : "List incidents, newest first",
+        "tags" : [ "Incidents" ],
+        "parameters" : [ {
+          "name" : "page",
+          "in" : "query",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "minimum" : 0,
+            "default" : 0
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 100,
+            "minimum" : 1,
+            "default" : 20
+          }
+        }, {
+          "description" : "Repeat to include several states; all states when absent",
+          "name" : "state",
+          "in" : "query",
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        } ],
+        "responses" : {
+          "401" : {
+            "description" : "No or invalid bearer token",
+            "content" : {
+              "application/problem+json" : { }
+            }
+          },
+          "403" : {
+            "description" : "Role missing",
+            "content" : {
+              "application/problem+json" : { }
+            }
+          },
+          "200" : {
+            "description" : "One page of incidents",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IncidentPageDto"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Unknown state or invalid paging",
+            "content" : {
+              "application/problem+json" : { }
+            }
+          }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ "incident-viewer", "incident-approver" ]
+        } ]
+      }
+    },
+    "/api/v1/incidents/stream" : {
+      "get" : {
+        "summary" : "Live incident events (Server-Sent Events)",
+        "description" : "Every incident.state-changed and incident.occurrence-recorded event from now on, unchanged (event = eventType, id = eventId), plus heartbeat comments. Events are hints: reload what you show on (re)connect; there is no replay.",
+        "tags" : [ "Incidents" ],
+        "responses" : {
+          "401" : {
+            "description" : "No or invalid bearer token",
+            "content" : {
+              "application/problem+json" : { }
+            }
+          },
+          "403" : {
+            "description" : "Role missing",
+            "content" : {
+              "application/problem+json" : { }
+            }
+          },
+          "200" : {
+            "description" : "Event stream",
+            "content" : {
+              "text/event-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OutboundSseEvent"
+                }
+              }
+            }
+          },
+          "503" : {
+            "description" : "Stream limit of this instance reached; see Retry-After",
+            "headers" : {
+              "Retry-After" : {
+                "description" : "Seconds to wait"
+              }
+            },
+            "content" : {
+              "application/problem+json" : { }
+            }
+          }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ "incident-viewer", "incident-approver" ]
+        } ]
+      }
+    },
+    "/api/v1/incidents/{id}" : {
+      "get" : {
+        "summary" : "Incident with alert, step history and decision",
+        "tags" : [ "Incidents" ],
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/components/schemas/UUID"
+          }
+        } ],
+        "responses" : {
+          "401" : {
+            "description" : "No or invalid bearer token",
+            "content" : {
+              "application/problem+json" : { }
+            }
+          },
+          "403" : {
+            "description" : "Role missing",
+            "content" : {
+              "application/problem+json" : { }
+            }
+          },
+          "200" : {
+            "description" : "The incident; ETag is its version",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IncidentDetailDto"
+                }
+              }
+            },
+            "headers" : {
+              "ETag" : {
+                "description" : "Incident version, e.g. \"3\""
+              }
+            }
+          },
+          "404" : {
+            "description" : "Unknown incident",
+            "content" : {
+              "application/problem+json" : { }
+            }
+          }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ "incident-viewer", "incident-approver" ]
+        } ]
+      }
+    },
+    "/api/v1/incidents/{id}/decision" : {
+      "post" : {
+        "summary" : "Approve or reject the pending remediation proposal",
+        "tags" : [ "Incidents" ],
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/components/schemas/UUID"
+          }
+        }, {
+          "description" : "ETag of the incident version the decision is based on",
+          "in" : "header",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "examples" : [ "\"3\"" ]
+          },
+          "name" : "If-Match"
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DecisionDto"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "401" : {
+            "description" : "No or invalid bearer token",
+            "content" : {
+              "application/problem+json" : { }
+            }
+          },
+          "403" : {
+            "description" : "Role missing",
+            "content" : {
+              "application/problem+json" : { }
+            }
+          },
+          "200" : {
+            "description" : "Decision recorded; the incident after it",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IncidentDetailDto"
+                }
+              }
+            },
+            "headers" : {
+              "ETag" : {
+                "description" : "New incident version"
+              }
+            }
+          },
+          "400" : {
+            "description" : "Invalid body or If-Match",
+            "content" : {
+              "application/problem+json" : { }
+            }
+          },
+          "404" : {
+            "description" : "Unknown incident",
+            "content" : {
+              "application/problem+json" : { }
+            }
+          },
+          "409" : {
+            "description" : "Incident is not awaiting approval",
+            "content" : {
+              "application/problem+json" : { }
+            }
+          },
+          "412" : {
+            "description" : "Incident changed since the version in If-Match",
+            "content" : {
+              "application/problem+json" : { }
+            }
+          },
+          "428" : {
+            "description" : "If-Match missing",
+            "content" : {
+              "application/problem+json" : { }
+            }
+          }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ "incident-approver" ]
+        } ]
+      }
+    },
+    "/api/v1/me" : {
+      "get" : {
+        "summary" : "Name and incident roles of the authenticated user",
+        "tags" : [ "User" ],
+        "responses" : {
+          "200" : {
+            "description" : "The user",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CurrentUserDto"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Not authenticated",
+            "content" : {
+              "application/problem+json" : { }
+            }
+          },
+          "403" : {
+            "description" : "Not Allowed"
+          }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ ]
+        } ]
+      }
+    }
+  },
+  "info" : {
+    "title" : "incident-assistant API",
+    "version" : "1"
+  }
+}

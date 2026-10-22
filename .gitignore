@@ -4,6 +4,13 @@ target/
 # Quarkus
 .quarkus/
 
+# Web UI (incident-assistant-app/src/main/webui): Node.js installed by Quinoa, packages, build
+# output, API types generated from the OpenAPI snapshot
+.quinoa/
+node_modules/
+incident-assistant-app/src/main/webui/dist/
+incident-assistant-app/src/main/webui/src/api/schema.d.ts
+
 # IntelliJ IDEA
 .idea/
 *.iml

@@ -121,7 +121,7 @@ Acceptance criteria
 - Docs: A-0012, A-0003/A-0007/A-0009/A-0010/A-0011 and P-0012 updated, README topics and
   stream.
 
-## INC-015 Incident UI — TODO
+## INC-015 Incident UI — DONE
 Covers A-0010, P-0019 (amends P-0009). Needs INC-009 and INC-014.
 
 Acceptance criteria
