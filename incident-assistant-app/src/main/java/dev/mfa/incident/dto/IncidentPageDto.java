@@ -9,4 +9,4 @@ import java.util.List;
  * @param size requested page size
  */
 public record IncidentPageDto(
-    List<IncidentDto> items, int page, int size, long totalItems, int totalPages) {}
+    List<IncidentSummaryDto> items, int page, int size, long totalItems, int totalPages) {}

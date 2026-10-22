@@ -2,14 +2,19 @@ import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import type { Incident, IncidentPage } from "../api/types";
-import { STATE_CHANGED } from "../live/events";
+import { OCCURRENCE_RECORDED, STATE_CHANGED } from "../live/events";
 import { VIEWER, json, renderAt, requestOf, stubFetch } from "../test/support";
 import { IncidentListPage } from "./IncidentListPage";
 
 const PENDING = "11111111-1111-4111-8111-111111111111";
 const TRIAGED = "22222222-2222-4222-8222-222222222222";
 
-function summary(id: string, state: Incident["state"], fingerprint: string): Incident {
+function summary(
+  id: string,
+  state: Incident["state"],
+  fingerprint: string,
+  occurrenceCount = 0,
+): Incident {
   return {
     id,
     source: "prometheus",
@@ -18,6 +23,7 @@ function summary(id: string, state: Incident["state"], fingerprint: string): Inc
     version: 1,
     createdAt: "2026-10-18T10:00:00Z",
     updatedAt: "2026-10-18T10:00:00Z",
+    occurrenceCount,
   };
 }
 
@@ -102,5 +108,26 @@ describe("IncidentListPage", () => {
     expect(new URL(requestOf(fetchMock, 1).url, "http://localhost").searchParams.get("page")).toBe(
       "1",
     );
+  });
+
+  it("shows the occurrences and raises them at once from occurrence events", async () => {
+    const fetchMock = stubFetch(
+      json(page([summary(PENDING, "AWAITING_APPROVAL", "fp-pending", 2)])),
+      // Read before the last occurrence was committed: the count from the event stays.
+      json(page([summary(PENDING, "APPROVED", "fp-pending", 4)])),
+    );
+    const { live } = renderList();
+    expect(await screen.findByTestId(`occurrences-${PENDING}`)).toHaveTextContent("2");
+
+    act(() =>
+      live.emit({ eventType: OCCURRENCE_RECORDED, incidentId: PENDING, occurrenceCount: 5 }),
+    );
+
+    expect(screen.getByTestId(`occurrences-${PENDING}`)).toHaveTextContent("5");
+    await waitFor(() =>
+      expect(screen.getByTestId(`incident-${PENDING}`)).not.toHaveClass("awaiting-approval"),
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(screen.getByTestId(`occurrences-${PENDING}`)).toHaveTextContent("5");
   });
 });

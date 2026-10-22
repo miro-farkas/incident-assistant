@@ -105,40 +105,13 @@
           }
         }
       },
-      "IncidentDto" : {
-        "type" : "object",
-        "properties" : {
-          "id" : {
-            "$ref" : "#/components/schemas/UUID"
-          },
-          "source" : {
-            "type" : "string"
-          },
-          "fingerprint" : {
-            "type" : "string"
-          },
-          "state" : {
-            "$ref" : "#/components/schemas/IncidentState"
-          },
-          "version" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "createdAt" : {
-            "$ref" : "#/components/schemas/Instant"
-          },
-          "updatedAt" : {
-            "$ref" : "#/components/schemas/Instant"
-          }
-        }
-      },
       "IncidentPageDto" : {
         "type" : "object",
         "properties" : {
           "items" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/IncidentDto"
+              "$ref" : "#/components/schemas/IncidentSummaryDto"
             }
           },
           "page" : {
@@ -162,6 +135,37 @@
       "IncidentState" : {
         "type" : "string",
         "enum" : [ "RECEIVED", "TRIAGED", "DIAGNOSED", "AWAITING_APPROVAL", "APPROVED", "REJECTED", "RESOLVED", "ESCALATED", "FAILED" ]
+      },
+      "IncidentSummaryDto" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "$ref" : "#/components/schemas/UUID"
+          },
+          "source" : {
+            "type" : "string"
+          },
+          "fingerprint" : {
+            "type" : "string"
+          },
+          "state" : {
+            "$ref" : "#/components/schemas/IncidentState"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createdAt" : {
+            "$ref" : "#/components/schemas/Instant"
+          },
+          "updatedAt" : {
+            "$ref" : "#/components/schemas/Instant"
+          },
+          "occurrenceCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
       },
       "Instant" : {
         "type" : "string",

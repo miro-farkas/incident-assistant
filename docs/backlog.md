@@ -144,6 +144,22 @@ Acceptance criteria
   approve, state changes to `APPROVED` live.
 - README: how to open the UI locally, users, how the UI is built.
 
+## INC-018 Occurrences in the incident list — DONE
+Amends A-0006 and A-0010. Needs INC-015 (UI) and INC-017 (occurrence event).
+
+The list shows how often an alert repeated, so a noisy incident stands out without opening it.
+
+Acceptance criteria
+- Each item of `GET /api/v1/incidents` carries `occurrenceCount`, the occurrences recorded for the
+  incident (A-0003), as in the detail. Counted for the whole page in one grouped query, not one
+  query per incident. Detail, decision and event formats are unchanged.
+- OpenAPI snapshot updated; the UI types follow from it.
+- The incident list shows an occurrences column; it updates live: the count rises at once from
+  `incident.occurrence-recorded` (highest value seen, A-0012), and the page still reloads on events.
+- Tests: list returns counts for incidents with and without occurrences on one page; Vitest for
+  the column and the live update; the existing end-to-end test still passes.
+- Docs: A-0006 and A-0010 amended, README endpoint table.
+
 ## INC-016 E-mail notifications — TODO
 Covers A-0011, P-0020. Needs INC-009 (API, client credentials).
 

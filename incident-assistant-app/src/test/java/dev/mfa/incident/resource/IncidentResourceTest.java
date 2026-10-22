@@ -144,6 +144,31 @@ class IncidentResourceTest {
 
   @Test
   @TestSecurity(user = "viewer-subject", roles = "incident-viewer")
+  void listCountsRepeatedAlertsPerIncident() {
+    AlertMessage noisy = alert();
+    UUID noisyId = ingestion.ingest(noisy).incidentId();
+    ingestion.ingest(noisy);
+    ingestion.ingest(noisy);
+    UUID quietId = ingestion.ingest(alert()).incidentId();
+
+    var page =
+        given()
+            .queryParam("state", "RECEIVED")
+            .queryParam("size", 100)
+            .when()
+            .get(INCIDENTS)
+            .then()
+            .statusCode(200)
+            .extract()
+            .jsonPath();
+
+    assertThat(page.getLong("items.find { it.id == '" + noisyId + "' }.occurrenceCount"))
+        .isEqualTo(2);
+    assertThat(page.getLong("items.find { it.id == '" + quietId + "' }.occurrenceCount")).isZero();
+  }
+
+  @Test
+  @TestSecurity(user = "viewer-subject", roles = "incident-viewer")
   void detailCountsRepeatedAlerts() {
     AlertMessage alert = alert();
     UUID incidentId = ingestion.ingest(alert).incidentId();

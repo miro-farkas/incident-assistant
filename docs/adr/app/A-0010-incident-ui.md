@@ -15,7 +15,9 @@ its evidence and the proposal. Viewers follow incidents without deciding.
 - Screens:
   - **Incidents:** list filtered by state (default: open states), paging, live updates
     from `GET /api/v1/incidents/stream` (A-0009); an `AWAITING_APPROVAL` incident is
-    highlighted.
+    highlighted. Each row shows the occurrences count, raised at once from
+    `incident.occurrence-recorded` (highest value seen, A-0012) besides the page reload
+    (amended by INC-018).
   - **Incident detail:** alert (name, source, service, severity, summary, labels), step
     history with timestamps and reason codes, occurrences count (updated live from
     `incident.occurrence-recorded`, A-0012), approval decision if any. Updates live.

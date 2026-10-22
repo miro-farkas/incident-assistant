@@ -145,7 +145,7 @@ session cookie instead, see [Web UI](#web-ui)), errors as RFC 9457 Problem Detai
 
 | Endpoint | Role | |
 |---|---|---|
-| `GET /api/v1/incidents?state=…&page=0&size=20` | `incident-viewer` or `incident-approver` | newest first, `state` repeatable |
+| `GET /api/v1/incidents?state=…&page=0&size=20` | `incident-viewer` or `incident-approver` | newest first, `state` repeatable; each item with its `occurrenceCount` |
 | `GET /api/v1/incidents/{id}` | `incident-viewer` or `incident-approver` | alert, steps, decision; `ETag` = version |
 | `POST /api/v1/incidents/{id}/decision` | `incident-approver` | `{"decision": "APPROVE"\|"REJECT", "comment": …}` with `If-Match` |
 | `GET /api/v1/incidents/stream` | `incident-viewer` or `incident-approver` | Server-Sent Events: every incident event from now on (A-0009) |
@@ -188,7 +188,7 @@ Quarkus Quinoa on the same origin as the API.
   in as `approver`/`approver` (sees the decision buttons) or `viewer`/`viewer` (reads only). Dev
   mode starts the Vite dev server (port 5173) behind the service, so UI changes reload live.
 - Screens: incident list (filter by state, open states by default, paging, `AWAITING_APPROVAL`
-  highlighted), detail (alert, steps with their output as key/value text, occurrences count,
+  highlighted, occurrences count per incident), detail (alert, steps with their output as key/value text, occurrences count,
   decision) and the decision itself (approve or reject with an optional comment). Both screens
   update live from the event stream; the header shows the stream state.
 - Login: the UI calls `GET /api/v1/me`; without a session it sends the browser to `/login`, where
