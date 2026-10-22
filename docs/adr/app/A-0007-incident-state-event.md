@@ -43,4 +43,5 @@ stream endpoint (A-0009, A-0010).
   | Value | State | Meaning |
   |---|---|---|
   | `REJECTED_BY_APPROVER` | `REJECTED` | an approver rejected the proposal (A-0006); `step` and `stepId` are `null` |
-- Not in scope: events for non-state changes such as alert occurrences.
+- Alert occurrences are published on the same topic as `incident.occurrence-recorded`
+  (A-0012); consumers select events by `eventType`.

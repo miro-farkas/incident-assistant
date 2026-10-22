@@ -71,7 +71,8 @@ class AlertIngestionKafkaTest {
 
     await().atMost(TIMEOUT).until(() -> tables.occurrencePayloads(incidentId).size() == 1);
     assertThat(tables.incidentIds(alert.source(), alert.fingerprint())).containsExactly(incidentId);
-    assertThat(tables.outboxEvents(incidentId)).hasSize(1);
+    // Creation event and occurrence event (A-0012).
+    assertThat(tables.outboxEvents(incidentId)).hasSize(2);
   }
 
   @Test

@@ -8,6 +8,7 @@ import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.LockModeType;
 import jakarta.persistence.OptimisticLockException;
 import jakarta.persistence.PersistenceException;
 import java.util.List;
@@ -23,15 +24,18 @@ public class IncidentRepository implements PanacheRepositoryBase<Incident, UUID>
 
   /**
    * Returns the incident for this source and fingerprint whose state is not one of {@code
-   * closedStates}; the unique index guarantees there is at most one.
+   * closedStates}, locked with {@code FOR UPDATE} until the transaction ends; the unique index
+   * guarantees there is at most one. The lock serializes occurrences of one incident (A-0012) and
+   * does not change the row; waiting for it is bounded by the statement timeout.
    */
-  public Optional<Incident> findOpen(
+  public Optional<Incident> findOpenForUpdate(
       String source, String fingerprint, Set<IncidentState> closedStates) {
     return find(
             "source = ?1 and fingerprint = ?2 and state not in ?3",
             source,
             fingerprint,
             closedStates)
+        .withLock(LockModeType.PESSIMISTIC_WRITE)
         .firstResultOptional();
   }
 

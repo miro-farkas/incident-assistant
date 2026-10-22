@@ -54,6 +54,7 @@ New ADRs use `platform/template.md` (skill `write-adr`).
 | [A-0009](app/A-0009-incident-event-stream.md) | Incident event stream | P-0018, P-0009 |
 | [A-0010](app/A-0010-incident-ui.md) | Incident UI | P-0019, P-0018, P-0009 |
 | [A-0011](app/A-0011-notification-service.md) | Notification service | P-0020, P-0012, P-0009, P-0016 |
+| [A-0012](app/A-0012-incident-occurrence-event.md) | Incident occurrence event | P-0012, P-0003 |
 
 ## Former numbering
 

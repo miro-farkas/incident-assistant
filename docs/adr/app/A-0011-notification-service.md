@@ -53,4 +53,6 @@ workflow escalated an incident. Incident state changes arrive on
   checks stay as in A-0006.
 - Locally both modules use the same database user; the role separation exists only in
   production and is part of its provisioning.
+- The consumer handles `incident.state-changed` only and skips other event types on the
+  topic, such as `incident.occurrence-recorded` (A-0012), without recording them.
 - Not in scope: Slack or other chat channels, per-user subscriptions, notification UI.

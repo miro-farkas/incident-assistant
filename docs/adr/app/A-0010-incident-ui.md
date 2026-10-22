@@ -17,9 +17,10 @@ its evidence and the proposal. Viewers follow incidents without deciding.
     from `GET /api/v1/incidents/stream` (A-0009); an `AWAITING_APPROVAL` incident is
     highlighted.
   - **Incident detail:** alert (name, source, service, severity, summary, labels), step
-    history with timestamps and reason codes, occurrences count, approval decision if
-    any. Updates live. Built in two stages, because the UI is implemented before the AI
-    steps (backlog order):
+    history with timestamps and reason codes, occurrences count (updated live from
+    `incident.occurrence-recorded`, A-0012), approval decision if any. Updates live.
+    Built in two stages, because the UI is implemented before the AI steps (backlog
+    order):
     - first (INC-015): each step's output shown generically as a readable key/value view;
     - then, with the item that defines each result: triage result (INC-006), diagnosis
       with hypothesis, evidence and source references, confidence (INC-007), remediation

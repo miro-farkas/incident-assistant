@@ -70,7 +70,8 @@ class AlertIngestionServiceTest {
     assertThat(tables.occurrencePayloads(incident.id()))
         .singleElement()
         .satisfies(p -> assertThat(json(p)).isEqualTo(objectMapper.valueToTree(alert)));
-    assertThat(tables.outboxEvents(incident.id())).hasSize(1);
+    // Creation event and occurrence event (A-0012).
+    assertThat(tables.outboxEvents(incident.id())).hasSize(2);
     assertThat(tables.incidentIds(alert.source(), alert.fingerprint()))
         .containsExactly(incident.id());
   }

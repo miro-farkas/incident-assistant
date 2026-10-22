@@ -91,6 +91,36 @@ Acceptance criteria
   disconnected; limit enforced; role checks (`@TestSecurity`).
 - README: endpoint and configuration.
 
+## INC-017 Alert occurrence event — IN PROGRESS
+Covers A-0012 (amends A-0003 and A-0007; extends P-0012). Needs INC-003 (occurrences,
+outbox relay) and INC-014 (stream).
+
+A repeated alert for an open incident is recorded as an occurrence (A-0003). The UI
+dashboard (A-0010) shows the occurrences count and must see it change live, so every
+recorded occurrence also publishes an `incident.occurrence-recorded` event on
+`ops.incidents.events.v1`, which the stream (A-0009) forwards to the UI like state events.
+
+Acceptance criteria
+- Every occurrence written to `alert_occurrence` writes one outbox event in the same
+  transaction; no occurrence event when the alert opens a new incident (that is the
+  existing creation event). A rolled-back ingestion attempt (A-0003 retry) leaves neither
+  row.
+- `IncidentOccurrenceRecorded` record and `docs/schemas/incident-occurrence-event-v1.json`
+  with the fields of A-0012: keyed by incident id, `occurredAt` is the stored occurrence
+  time, `occurrenceCount` includes the new occurrence, no alert payload or free text.
+  `incident.state-changed`, its record and its schema are unchanged.
+- The open incident is read with `FOR UPDATE` when an alert is recorded, so concurrent
+  occurrences of one incident get distinct, increasing counts; the incident row and its
+  version are not changed.
+- The stream (A-0009) forwards the event unchanged with `event: incident.occurrence-recorded`;
+  the UI item (INC-015) updates the occurrences count from it.
+- Tests: duplicate alert → occurrence row and one outbox event with exactly the schema's
+  properties and valid values; new incident → no occurrence event; two concurrent
+  duplicates of one incident → distinct consecutive counts; relay publishes the event keyed
+  by incident id; stream client receives it with the right SSE `event` name.
+- Docs: A-0012, A-0003/A-0007/A-0009/A-0010/A-0011 and P-0012 updated, README topics and
+  stream.
+
 ## INC-015 Incident UI — TODO
 Covers A-0010, P-0019 (amends P-0009). Needs INC-009 and INC-014.
 

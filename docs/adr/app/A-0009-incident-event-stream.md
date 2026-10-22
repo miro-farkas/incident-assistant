@@ -6,7 +6,8 @@
 
 ## Context
 The incident UI (A-0010) shows the incident list and detail live. State changes are
-published as `incident.state-changed` events on `ops.incidents.events.v1` (A-0007).
+published as `incident.state-changed` events on `ops.incidents.events.v1` (A-0007), alert
+occurrences as `incident.occurrence-recorded` (A-0012).
 
 ## Decision
 - Endpoint `GET /api/v1/incidents/stream` (`text/event-stream`) in
@@ -17,7 +18,7 @@ published as `incident.state-changed` events on `ops.incidents.events.v1` (A-000
   offset commits, value read as a string and forwarded unchanged. An event without a
   readable `eventId` and `eventType` is skipped with a warning (payload not logged); the
   channel never stops on it.
-- Each event becomes one SSE message: `event: incident.state-changed`, `id: <eventId>`,
+- Each event becomes one SSE message: `event: <eventType>`, `id: <eventId>`,
   `data: <event JSON>`. Heartbeats are the comment line `: heartbeat`.
 - Configuration (`incident.stream.*`, validated at startup):
 
@@ -38,6 +39,6 @@ published as `incident.state-changed` events on `ops.incidents.events.v1` (A-000
   holds the relay lock would see the events.
 
 ## Consequences
-- The stream carries exactly the A-0007 fields; anything else is fetched through
-  `GET /api/v1/incidents/{id}`.
+- The stream carries exactly the fields of the event types (A-0007, A-0012); anything else
+  is fetched through `GET /api/v1/incidents/{id}`.
 - Readiness includes the new channel.
