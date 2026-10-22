@@ -2,13 +2,9 @@ package dev.mfa.incident.service;
 
 import dev.mfa.incident.dto.AlertIngestionResult;
 import dev.mfa.incident.dto.AlertIngestionResult.IncidentOpened;
-import dev.mfa.incident.dto.AlertIngestionResult.OccurrenceRecorded;
 import dev.mfa.incident.dto.NewIncidentDto;
 import dev.mfa.incident.exception.OpenIncidentExistsException;
-import dev.mfa.incident.mapper.AlertMapper;
-import dev.mfa.incident.model.AlertOccurrence;
 import dev.mfa.incident.model.Incident;
-import dev.mfa.incident.repository.AlertOccurrenceRepository;
 import dev.mfa.incident.repository.IncidentRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
@@ -22,19 +18,16 @@ import java.util.Optional;
 public class AlertRecorder {
 
   private final IncidentRepository incidents;
-  private final AlertOccurrenceRepository occurrences;
   private final IncidentService incidentService;
-  private final AlertMapper alertMapper;
+  private final AlertOccurrenceService occurrenceService;
 
   public AlertRecorder(
       IncidentRepository incidents,
-      AlertOccurrenceRepository occurrences,
       IncidentService incidentService,
-      AlertMapper alertMapper) {
+      AlertOccurrenceService occurrenceService) {
     this.incidents = incidents;
-    this.occurrences = occurrences;
     this.incidentService = incidentService;
-    this.alertMapper = alertMapper;
+    this.occurrenceService = occurrenceService;
   }
 
   /**
@@ -46,12 +39,10 @@ public class AlertRecorder {
   @Transactional
   public AlertIngestionResult record(NewIncidentDto alert) {
     Optional<Incident> open =
-        incidents.findOpen(
+        incidents.findOpenForUpdate(
             alert.source(), alert.fingerprint(), IncidentStateMachine.terminalStates());
     if (open.isPresent()) {
-      AlertOccurrence occurrence = alertMapper.toOccurrence(open.get().getId(), alert);
-      occurrences.persist(occurrence);
-      return new OccurrenceRecorded(occurrence.getIncidentId(), occurrence.getId());
+      return occurrenceService.record(open.get(), alert);
     }
     return new IncidentOpened(incidentService.create(alert));
   }

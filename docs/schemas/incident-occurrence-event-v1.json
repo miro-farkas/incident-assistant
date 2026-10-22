@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:dev.mfa.incident:schema:incident-occurrence-event:v1",
+  "title": "Incident occurrence event v1",
+  "description": "Value of incident.occurrence-recorded messages on topic ops.incidents.events.v1, keyed by incidentId (A-0012). The topic also carries other event types; consumers select by eventType. Consumers must ignore unknown properties; v1 only gains optional properties.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "eventId",
+    "eventType",
+    "occurredAt",
+    "incidentId",
+    "incidentVersion",
+    "occurrenceId",
+    "occurrenceCount"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "description": "Version of this schema.",
+      "type": "integer",
+      "const": 1
+    },
+    "eventId": {
+      "description": "Unique event id; consumers deduplicate on it.",
+      "type": "string",
+      "format": "uuid"
+    },
+    "eventType": {
+      "type": "string",
+      "const": "incident.occurrence-recorded"
+    },
+    "occurredAt": {
+      "description": "Time the occurrence was received, UTC.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "incidentId": {
+      "description": "Incident id; equal to the message key.",
+      "type": "string",
+      "format": "uuid"
+    },
+    "incidentVersion": {
+      "description": "Current incident version. An occurrence does not change the incident, so several occurrence events can carry the same version.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "occurrenceId": {
+      "description": "Id of the recorded occurrence.",
+      "type": "string",
+      "format": "uuid"
+    },
+    "occurrenceCount": {
+      "description": "Occurrences of the incident including this one. Consumers keep the highest value seen.",
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

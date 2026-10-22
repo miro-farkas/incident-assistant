@@ -22,8 +22,8 @@ occasionally malformed payloads. Alert storms are possible.
   receive time), not as a new incident and not as a change of the incident row, so it never
   causes a version conflict with a running step. The partial unique index of A-0002 enforces
   one open incident; when two identical alerts race, the loser's insert fails on the index
-  and it is recorded as an occurrence on a second attempt. Occurrences publish no event
-  (A-0007).
+  and it is recorded as an occurrence on a second attempt. Each occurrence publishes an
+  `incident.occurrence-recorded` event (A-0012).
 - Dead-letter topic `ops.alerts.v1.dlq` with the reason in header `dead-letter-reason`. The
   reason names the rule and the field (for example `Alert is invalid: summary: must not be
   blank`) and never contains received content. Processing failures are retried with

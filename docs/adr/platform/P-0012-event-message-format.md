@@ -18,6 +18,9 @@ inbound payloads, LLM output, user comments.
   (increases per entity; consumers drop events older than one already seen).
 - Prefer one event type per kind of change with the new state as a field, over one type per
   transition.
+- Events of one entity share a topic and key, so they stay in order, even when they are of
+  different types. Each type has its own schema and version; consumers select events by
+  `eventType` and ignore types they do not handle.
 - Events are **thin**: ids, states and machine-readable reason codes only — no inbound
   payload, no LLM output, no free text, no personal data. Consumers fetch details through
   the REST API (P-0009), which applies access control.

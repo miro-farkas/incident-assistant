@@ -142,6 +142,18 @@ public class WorkflowTables {
                     .toList());
   }
 
+  /** Stored receive time of one occurrence. */
+  public Instant occurrenceCreatedAt(UUID occurrenceId) {
+    return QuarkusTransaction.requiringNew()
+        .call(
+            () ->
+                instant(
+                    entityManager
+                        .createNativeQuery("select created_at from alert_occurrence where id = :id")
+                        .setParameter("id", occurrenceId)
+                        .getSingleResult()));
+  }
+
   public String alertPayload(UUID incidentId) {
     return QuarkusTransaction.requiringNew()
         .call(

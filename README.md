@@ -145,7 +145,7 @@ Problem Details. OpenAPI: `/q/openapi`, Swagger UI in dev mode: `/q/swagger-ui`.
 | `GET /api/v1/incidents?state=…&page=0&size=20` | `incident-viewer` or `incident-approver` | newest first, `state` repeatable |
 | `GET /api/v1/incidents/{id}` | `incident-viewer` or `incident-approver` | alert, steps, decision; `ETag` = version |
 | `POST /api/v1/incidents/{id}/decision` | `incident-approver` | `{"decision": "APPROVE"\|"REJECT", "comment": …}` with `If-Match` |
-| `GET /api/v1/incidents/stream` | `incident-viewer` or `incident-approver` | Server-Sent Events: every state event from now on (A-0009) |
+| `GET /api/v1/incidents/stream` | `incident-viewer` or `incident-approver` | Server-Sent Events: every incident event from now on (A-0009) |
 
 The local realm has two users (passwords as user names, local only): `viewer`
 (`incident-viewer`) and `approver` (both roles). The client `incident-assistant` allows the
@@ -165,8 +165,8 @@ curl -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -H 'I
 Until the AI steps exist (INC-006 to INC-008) no incident reaches `AWAITING_APPROVAL` in a
 real run, so a decision answers `409`.
 
-The event stream forwards each `incident.state-changed` event unchanged (`event:` is the
-event type, `id:` the event id, `data:` the JSON) and sends `: heartbeat` comments while idle.
+The event stream forwards each `incident.state-changed` and `incident.occurrence-recorded`
+event unchanged (`event:` is the event type, `id:` the event id, `data:` the JSON) and sends `: heartbeat` comments while idle.
 Events are hints: a client reloads what it shows when it connects or reconnects; nothing is
 replayed. Watch it while sending alerts (for example with `alert-producer`):
 
@@ -180,7 +180,7 @@ curl -N -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/incidents
 |---|---|---|
 | `ops.alerts.v1` | in | `docs/schemas/alert-v1.json` |
 | `ops.alerts.v1.dlq` | out | rejected alerts, unchanged, reason in header `dead-letter-reason` |
-| `ops.incidents.events.v1` | out; in for the event stream (group `incident-assistant-stream-<instance id>`, no commits) | `docs/schemas/incident-event-v1.json`, keyed by incident id |
+| `ops.incidents.events.v1` | out; in for the event stream (group `incident-assistant-stream-<instance id>`, no commits) | `incident.state-changed`: `docs/schemas/incident-event-v1.json`; `incident.occurrence-recorded` (repeated alert of an open incident, A-0012): `docs/schemas/incident-occurrence-event-v1.json`; both keyed by incident id |
 
 In dev mode, send an alert to the local broker with [kcat](https://github.com/edenhill/kcat):
 

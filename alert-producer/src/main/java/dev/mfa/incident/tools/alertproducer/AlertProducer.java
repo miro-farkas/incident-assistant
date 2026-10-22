@@ -24,10 +24,10 @@ public class AlertProducer {
   static final String TOPIC = "ops.alerts.v1";
 
   /** Alerts sent per minute, spread evenly. */
-  static final int ALERTS_PER_MINUTE = 60;
+  static final int ALERTS_PER_MINUTE = 12;
 
   /** Total alerts to send; 0 sends until stopped. */
-  static final long TOTAL_ALERTS = 0;
+  static final long TOTAL_ALERTS = 20;
 
   /**
    * Size of the fingerprint pool. Alerts with the same source and fingerprint belong to the same
@@ -50,19 +50,12 @@ public class AlertProducer {
           new AlertType("DiskAlmostFull", "postgres", "warning", "Disk usage above 90%"),
           new AlertType("ConsumerLagHigh", "orders", "warning", "Consumer lag above 10000"));
 
-  public static void main(String[] args) throws InterruptedException {
-    Properties props = new Properties();
-    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
-    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-    props.put(ProducerConfig.ACKS_CONFIG, "all");
-    props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 5000);
-    props.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 10000);
-    props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 5000);
+  void main() {
+    Properties kafkaProps = createKafkaProperties();
 
     AtomicLong acked = new AtomicLong();
     AtomicLong failed = new AtomicLong();
-    KafkaProducer<String, String> producer = new KafkaProducer<>(props);
+    KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaProps);
     Thread main = Thread.currentThread();
     Runtime.getRuntime()
         .addShutdownHook(
@@ -94,7 +87,7 @@ public class AlertProducer {
         next += intervalNanos;
 
         int fp = ThreadLocalRandom.current().nextInt(DISTINCT_FINGERPRINTS);
-        AlertType type = ALERT_TYPES.get(fp % ALERT_TYPES.size());
+        AlertType type = ALERT_TYPES.get(ThreadLocalRandom.current().nextInt(ALERT_TYPES.size()));
         String fingerprint = "manual-" + type.alertName().toLowerCase() + "-" + fp;
         producer.send(
             new ProducerRecord<>(TOPIC, "prometheus:" + fingerprint, json(type, fingerprint)),
@@ -118,6 +111,18 @@ public class AlertProducer {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
+  }
+
+  private static Properties createKafkaProperties() {
+    Properties props = new Properties();
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    props.put(ProducerConfig.ACKS_CONFIG, "all");
+    props.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, 5000);
+    props.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 10000);
+    props.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 5000);
+    return props;
   }
 
   static String json(AlertType type, String fingerprint) {

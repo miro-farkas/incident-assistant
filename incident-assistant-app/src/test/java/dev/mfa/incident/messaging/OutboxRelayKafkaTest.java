@@ -6,12 +6,17 @@ import static dev.mfa.incident.testsupport.WorkflowFixtures.succeeded;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import dev.mfa.incident.dto.AlertMessage;
 import dev.mfa.incident.dto.IncidentDto;
+import dev.mfa.incident.dto.IncidentOccurrenceRecorded;
+import dev.mfa.incident.dto.IncidentStateChanged;
 import dev.mfa.incident.model.IncidentState;
 import dev.mfa.incident.model.OutboxEvent;
 import dev.mfa.incident.model.StepType;
+import dev.mfa.incident.service.AlertIngestionService;
 import dev.mfa.incident.service.IncidentService;
 import dev.mfa.incident.testsupport.KafkaTestClient;
+import dev.mfa.incident.testsupport.WorkflowFixtures;
 import dev.mfa.incident.testsupport.WorkflowTables;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -20,13 +25,14 @@ import java.util.UUID;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.Test;
 
-/** The scheduled relay publishes to Kafka Dev Services (P-0003, A-0007). */
+/** The scheduled relay publishes to Kafka Dev Services (P-0003, A-0007, A-0012). */
 @QuarkusTest
 class OutboxRelayKafkaTest {
 
   private static final String EVENTS = "ops.incidents.events.v1";
 
   @Inject IncidentService incidents;
+  @Inject AlertIngestionService ingestion;
   @Inject KafkaTestClient kafka;
   @Inject WorkflowTables tables;
 
@@ -54,6 +60,33 @@ class OutboxRelayKafkaTest {
         .until(
             () ->
                 tables.outboxEvents(incidentId).stream().allMatch(e -> e.getPublishedAt() != null));
+  }
+
+  @Test
+  void publishesOccurrenceEventsInOrderWithTheIncidentsStateEvents() {
+    AlertMessage alert = WorkflowFixtures.alert();
+    UUID incidentId = ingestion.ingest(alert).incidentId();
+    ingestion.ingest(alert);
+    IncidentDto incident = incidents.get(incidentId);
+    step(incident, StepType.TRIAGE, IncidentState.TRIAGED);
+    String key = incidentId.toString();
+    List<OutboxEvent> written = tables.outboxEvents(incidentId);
+    assertThat(written)
+        .extracting(OutboxEvent::getEventType)
+        .containsExactly(
+            IncidentStateChanged.EVENT_TYPE,
+            IncidentOccurrenceRecorded.EVENT_TYPE,
+            IncidentStateChanged.EVENT_TYPE);
+
+    List<ConsumerRecord<String, String>> received =
+        kafka.awaitRecords(EVENTS, r -> key.equals(r.key()), written.size());
+
+    assertThat(received)
+        .extracting(ConsumerRecord::value)
+        .containsExactlyElementsOf(written.stream().map(OutboxEvent::getPayload).toList());
+    assertThat(received)
+        .extracting(ConsumerRecord::partition)
+        .containsOnly(received.getFirst().partition());
   }
 
   private IncidentDto step(IncidentDto incident, StepType step, IncidentState target) {
