@@ -35,6 +35,19 @@
         "pkce.code.challenge.method": "S256",
         "post.logout.redirect.uris": "http://localhost:8080/*"
       }
+    },
+    {
+      "clientId": "notification-service",
+      "name": "notification-service",
+      "description": "notification-service reading incident details with the client credentials flow (A-0011). Local-only secret.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "notification-service-local-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true
     }
   ],
   "users": [
@@ -57,6 +70,12 @@
       "lastName": "Approver",
       "credentials": [{ "type": "password", "value": "approver", "temporary": false }],
       "realmRoles": ["incident-viewer", "incident-approver"]
+    },
+    {
+      "username": "service-account-notification-service",
+      "enabled": true,
+      "serviceAccountClientId": "notification-service",
+      "realmRoles": ["incident-viewer"]
     }
   ]
 }

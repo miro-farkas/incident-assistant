@@ -16,6 +16,7 @@ See `docs/architecture.md`, `docs/adr/` and `docs/backlog.md`.
 |---|---|---|
 | `incident-assistant-app` | The service: ingestion, workflow, AI steps, approval API | 8080 |
 | `ops-tools-mcp` | Mock operations backend exposed as an MCP server | 8081 |
+| `notification-service` | E-mails approvers and on-call about incident state changes (A-0011) | 8082 |
 | `alert-producer` | Manual testing tool: produces alerts to `ops.alerts.v1` (P-0017) | – |
 
 ## Prerequisites
@@ -63,9 +64,10 @@ Each module runs in its own terminal:
 ```shell
 ./mvnw quarkus:dev -pl incident-assistant-app
 ./mvnw quarkus:dev -pl ops-tools-mcp -Ddebug=5006
+./mvnw quarkus:dev -pl notification-service -Ddebug=5007
 ```
 
-The second module needs a different debugger port than the first (default 5005).
+Every further module needs a different debugger port than the first (default 5005).
 
 ### Local services
 
@@ -79,6 +81,7 @@ and starts faster.
 | PostgreSQL | `localhost:5432`, database `incident`, user/password `incident` | local-only credentials |
 | Kafka | `localhost:9092` (containers on the compose network: `kafka:19092`) | single node, KRaft; topic auto-creation off |
 | Keycloak | `http://localhost:8180`, realm `incident-assistant`; admin console user/password `admin` | data in schema `keycloak` of PostgreSQL |
+| Mailpit | SMTP `localhost:1025`, web UI `http://localhost:8025` | mails sent by `notification-service` in dev mode; in memory only |
 
 `kafka-init` creates the topics once the broker is healthy and exits; `postgres-init`
 creates the `keycloak` schema before Keycloak starts. Keycloak imports
@@ -271,6 +274,68 @@ Try it in dev mode with the [MCP Inspector](https://github.com/modelcontextproto
 `http://localhost:8081/mcp/read`, or `http://localhost:8081/mcp/actions` with header
 `X-Api-Key: dev-only-actions-key-not-a-secret-0001`.
 
+### notification-service
+
+Consumes `ops.incidents.events.v1` (group `notification-service`) and e-mails a rule's
+recipients when an incident enters its state (A-0011, P-0020):
+
+| Rule | State | Recipients | Subject |
+|---|---|---|---|
+| `approval-needed` | `AWAITING_APPROVAL` | `notification.recipients.approvers` | `[incident-assistant] Approval needed: <service> (<severity>)` |
+| `escalated` | `ESCALATED` | `notification.recipients.on-call` | `[incident-assistant] Escalated: <service> (<severity>) – <reasonCode>` |
+
+A message shows service, severity and alert name (as reported by the alert until triage
+exists, INC-006), state, reason code, time and a link to the incident in the UI; never the
+alert summary, LLM output or comments. Details come from `GET /api/v1/incidents/{id}` with a
+client credentials token of the Keycloak client `notification-service` (service account,
+role `incident-viewer`). When the lookup fails after its retries, a minimal message (incident,
+state, reason, time, link) is sent. Duplicate and older events are skipped; failed sends are
+retried with exponential backoff and marked `FAILED` after the last attempt.
+
+The data lives in schema `notification` of the incident database (Flyway history included).
+In production the service connects as a role that owns only this schema, for example:
+
+```sql
+create role notification_service login password '<secret>';
+create schema notification authorization notification_service;
+```
+
+Locally both modules use the compose user `incident`.
+
+See mails locally: run `incident-assistant-app` and `notification-service` in dev mode and
+open Mailpit at `http://localhost:8025`. Dev mode reuses a compose project that is already
+running and does not add services to it; if Mailpit is missing, start it once with
+`docker compose -f compose-devservices.yml up -d mailpit` (until then sends fail and are
+retried). Until the AI steps exist no incident reaches
+`AWAITING_APPROVAL` or `ESCALATED` by itself, so publish a state event for an existing incident
+(id from the UI or `GET /api/v1/incidents`; a version above its current one):
+
+```shell
+echo '{"schemaVersion":1,"eventId":"<new uuid>","eventType":"incident.state-changed","occurredAt":"2026-10-24T10:00:00Z","incidentId":"<incident id>","incidentVersion":99,"previousState":"DIAGNOSED","state":"AWAITING_APPROVAL","step":"PROPOSAL","stepId":null,"reasonCode":null}' \
+  | kcat -P -b localhost:9092 -t ops.incidents.events.v1 -k <incident id>
+```
+
+The realm file defines the client `notification-service`; a Keycloak
+that imported the realm before this change does not have it: add it in the admin console or
+re-import the realm (drop schema `keycloak` or start clean).
+
+| Property | Environment variable | Default | Description |
+|---|---|---|---|
+| `notification.ui-base-url` | `NOTIFICATION_UI_BASE_URL` | dev: `http://localhost:8080`; prod: required | Address of the incident UI; messages link to `<ui-base-url>/incidents/<id>`. |
+| `notification.recipients.approvers` / `.on-call` | `NOTIFICATION_RECIPIENTS_APPROVERS` / `NOTIFICATION_RECIPIENTS_ON_CALL` | dev: `*@incident-assistant.local`; prod: required | Comma-separated addresses of a recipient list. |
+| `notification.rules.<name>.state` / `.recipients` / `.subject` | | the two rules above | Trigger state (one rule per state), recipient list, subject (Qute template with `service`, `severity`, `alertName`, `state`, `reasonCode`). |
+| `notification.sender.interval` | `NOTIFICATION_SENDER_INTERVAL` | `5s` | Pause between sender runs. |
+| `notification.sender.batch-size` | `NOTIFICATION_SENDER_BATCH_SIZE` | `20` | Notifications claimed per run (1-500). |
+| `notification.sender.max-attempts` | `NOTIFICATION_SENDER_MAX_ATTEMPTS` | `5` | Attempts before a notification is `FAILED` (1-20). |
+| `notification.sender.backoff-base` | `NOTIFICATION_SENDER_BACKOFF_BASE` | `30s` | Wait before the second attempt; doubles with every further one. |
+| `notification.sender.claim-timeout` | `NOTIFICATION_SENDER_CLAIM_TIMEOUT` | `5m` | How long a claimed notification stays reserved; after a crash it is sent again after this time. |
+| `quarkus.rest-client.incident-api.url` | `INCIDENT_API_URL` | dev: `http://localhost:8080`; prod: required | Base address of `incident-assistant-app`. Timeouts: connect 2 s, read 5 s; 2 retries, then a circuit breaker. |
+| `quarkus.oidc-client.auth-server-url` | `OIDC_AUTH_SERVER_URL` | dev: compose Keycloak; prod: required | Issuer for the client credentials token. |
+| `quarkus.oidc-client.credentials.secret` | `OIDC_CLIENT_SECRET` | dev: local realm secret; prod: required | Secret of the client `notification-service`. |
+| `quarkus.mailer.host` / `port` / `username` / `password` | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USERNAME` / `SMTP_PASSWORD` | dev: Mailpit `localhost:1025`; prod: host required, port `587` with STARTTLS, credentials optional | SMTP server. A send waits at most 30 s. |
+| `quarkus.mailer.from` | `NOTIFICATION_MAIL_FROM` | `incident-assistant@localhost` | Sender address. |
+| datasource | `QUARKUS_DATASOURCE_JDBC_URL` / `_USERNAME` / `_PASSWORD` | dev: compose PostgreSQL; test: Dev Services; prod: required | The incident database, as the role above. |
+
 ### Alert producer
 
 For testing load or duplicate handling by hand, `alert-producer` sends generated alerts to
@@ -296,4 +361,16 @@ INCIDENT_INSTANCE_ID=incident-assistant-1 \
   java -jar incident-assistant-app/target/quarkus-app/quarkus-run.jar
 OPS_ACTIONS_API_KEY=<at least 32 characters> QUARKUS_HTTP_PORT=8081 \
   java -jar ops-tools-mcp/target/quarkus-app/quarkus-run.jar
+QUARKUS_HTTP_PORT=8082 \
+  QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://localhost:5432/incident \
+  QUARKUS_DATASOURCE_USERNAME=incident QUARKUS_DATASOURCE_PASSWORD=incident \
+  KAFKA_BOOTSTRAP_SERVERS=localhost:9092 \
+  INCIDENT_API_URL=http://localhost:8080 \
+  OIDC_AUTH_SERVER_URL=http://localhost:8180/realms/incident-assistant \
+  OIDC_CLIENT_SECRET=notification-service-local-secret \
+  SMTP_HOST=localhost SMTP_PORT=1025 QUARKUS_MAILER_START_TLS=DISABLED \
+  NOTIFICATION_UI_BASE_URL=http://localhost:8080 \
+  NOTIFICATION_RECIPIENTS_APPROVERS=approvers@incident-assistant.local \
+  NOTIFICATION_RECIPIENTS_ON_CALL=on-call@incident-assistant.local \
+  java -jar notification-service/target/quarkus-app/quarkus-run.jar
 ```

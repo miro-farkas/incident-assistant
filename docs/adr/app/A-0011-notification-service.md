@@ -44,6 +44,42 @@ workflow escalated an incident. Incident state changes arrive on
 - Sender configuration (`notification.sender.*`): interval, batch size, max attempts
   (default 5), backoff base (default 30 s).
 
+## Implementation (INC-016)
+- Packages (P-0013, decided with INC-016): `client` holds the REST client of the incident API
+  and its response record, `channel` the `NotificationChannel` interface and `EmailChannel`.
+  Both are used only by `service`; the ArchUnit layer rules of the module include them.
+- Service and severity: until the typed triage result exists (INC-006), messages show the
+  service and severity the alert reported (`alert.service`, `alert.severity` of the detail),
+  marked "as reported by the alert"; INC-006 switches them to the triaged values. Alert values
+  are untrusted: control characters are replaced, values are cut at 100 characters, the HTML
+  template escapes them. A missing value, and every value of the minimal message, is
+  `unknown`.
+- Tables follow P-0014: every table has the `BaseEntity` columns with `id` as primary key, so
+  `processed_event.event_id` and `incident_cursor.incident_id` are unique keys, and
+  `processed_event.created_at` is the processing time. `notification` also stores
+  `incident_id`, `rule`, `state`, `reason_code` and `occurred_at` of its event, so sending
+  does not depend on the event again.
+- Rules: `notification.rules.<name>.state`, `.recipients` (name of a list in
+  `notification.recipients`) and `.subject` (a Qute template with `service`, `severity`,
+  `alertName`, `state`, `reasonCode`). Startup fails on an unknown list or two rules for one
+  state; recipients of a list are de-duplicated. Body templates are shared:
+  `templates/notification/message.txt` and `.html`.
+- Consumer: group `notification-service`, `auto.offset.reset=latest` (a first deployment does
+  not notify about past events), offset committed after the recording transaction. Recording
+  is retried (fault tolerance); a concurrent recording of the same event loses on the unique
+  key and sees the committed one on retry. An unreadable event is skipped with a warning;
+  when recording still fails after its retries the channel stops and readiness reports it.
+- Sender: claims due rows with `FOR UPDATE SKIP LOCKED` in a short transaction, counts the
+  attempt and pushes `next_attempt_at` out by `notification.sender.claim-timeout` (default
+  5 min) as a lease; then looks up the details, renders, sends and records the outcome, each
+  outside that transaction, so no transaction is open while the API or SMTP is called. A
+  crashed sender's rows are claimed again after the lease. Backoff before attempt *n* + 1 is
+  `backoff-base * 2^(n-1)`.
+- The search path of the module's connections is `notification` only. Tests connect as the
+  production role: the test database's init script creates `notification_service` owning
+  schema `notification` and a table in `public`, and every connection runs
+  `set role notification_service`, so a statement outside the schema fails the build.
+
 ## Alternatives considered
 - See P-0020. Putting the alert summary in the mail: it is attacker-controllable text in a
   message from a trusted sender.

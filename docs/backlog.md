@@ -160,7 +160,7 @@ Acceptance criteria
   the column and the live update; the existing end-to-end test still passes.
 - Docs: A-0006 and A-0010 amended, README endpoint table.
 
-## INC-016 E-mail notifications — TODO
+## INC-016 E-mail notifications — DONE
 Covers A-0011, P-0020. Needs INC-009 (API, client credentials).
 
 Acceptance criteria

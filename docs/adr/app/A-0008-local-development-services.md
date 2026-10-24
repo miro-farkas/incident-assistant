@@ -52,6 +52,9 @@ backlog items. Tests start these through Dev Services with the configuration in
     restarts.
 - One database for all modules: each further module gets its own schema in the compose
   PostgreSQL (for example `notification`, A-0011), never a second database.
+- Mailpit (added by INC-016, A-0011): service `mailpit`, image `axllent/mailpit` (pinned),
+  SMTP on host port `1025`, web UI on `8025`, no volume (mails live in memory). Dev mode of
+  `notification-service` sends to it; tests use the mailer's mock mailbox.
 
 ## Alternatives considered
 - `apache/kafka-native` (the current Dev Services image): faster start, but no CLI for
