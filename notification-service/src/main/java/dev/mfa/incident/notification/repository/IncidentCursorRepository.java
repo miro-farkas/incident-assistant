@@ -12,8 +12,9 @@ public class IncidentCursorRepository implements PanacheRepositoryBase<IncidentC
 
   /**
    * The cursor of the incident, locked with {@code FOR UPDATE} until the transaction ends, so two
-   * events of one incident are compared one after the other. A first event of an incident finds
-   * none; two of those at once collide on {@code uq_incident_cursor_incident}.
+   * events of one incident, a redelivery among them, are compared one after the other. A first
+   * event of an incident finds none; two of those at once collide on {@code
+   * uq_incident_cursor_incident}.
    */
   public Optional<IncidentCursor> findForUpdate(UUID incidentId) {
     return find("incidentId", incidentId)

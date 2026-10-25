@@ -6,20 +6,11 @@ import dev.mfa.incident.notification.model.ChannelType;
 import dev.mfa.incident.notification.model.IncidentCursor;
 import dev.mfa.incident.notification.model.Notification;
 import dev.mfa.incident.notification.model.NotificationStatus;
-import dev.mfa.incident.notification.model.ProcessedEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.time.Instant;
 
 @ApplicationScoped
 public class NotificationMapper {
-
-  public ProcessedEvent toProcessedEvent(IncidentStateEventDto event) {
-    ProcessedEvent processed = new ProcessedEvent();
-    processed.setEventId(event.eventId());
-    processed.setIncidentId(event.incidentId());
-    processed.setIncidentVersion(event.incidentVersion());
-    return processed;
-  }
 
   public IncidentCursor toCursor(IncidentStateEventDto event) {
     IncidentCursor cursor = new IncidentCursor();

@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.UUID;
 
 /** Reads the tables of schema notification with plain JDBC, as the application's role. */
@@ -50,15 +51,15 @@ public class NotificationTables {
     }
   }
 
-  public boolean processed(UUID eventId) {
+  /** The newest version of the incident the service has recorded; empty before its first event. */
+  public OptionalLong cursor(UUID incidentId) {
     try (Connection connection = dataSource.getConnection();
         PreparedStatement statement =
             connection.prepareStatement(
-                "select count(*) from processed_event where event_id = ?")) {
-      statement.setObject(1, eventId);
+                "select last_version from incident_cursor where incident_id = ?")) {
+      statement.setObject(1, incidentId);
       try (ResultSet result = statement.executeQuery()) {
-        result.next();
-        return result.getLong(1) > 0;
+        return result.next() ? OptionalLong.of(result.getLong(1)) : OptionalLong.empty();
       }
     } catch (SQLException e) {
       throw new IllegalStateException(e);

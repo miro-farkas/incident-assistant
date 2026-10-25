@@ -23,22 +23,22 @@ class BaseEntityIdentityTest {
 
   @Test
   void newEntityEqualsOnlyItselfAndKeepsItsHashWhenPersisted() {
-    ProcessedEvent event = unsaved();
-    Set<ProcessedEvent> set = new HashSet<>(Set.of(event));
+    IncidentCursor cursor = unsaved();
+    Set<IncidentCursor> set = new HashSet<>(Set.of(cursor));
 
-    assertThat(event).isEqualTo(event).isNotEqualTo(unsaved());
-    QuarkusTransaction.requiringNew().run(() -> entityManager.persist(event));
+    assertThat(cursor).isEqualTo(cursor).isNotEqualTo(unsaved());
+    QuarkusTransaction.requiringNew().run(() -> entityManager.persist(cursor));
 
-    assertThat(event.getId()).isNotNull();
-    assertThat(set).contains(event);
+    assertThat(cursor.getId()).isNotNull();
+    assertThat(set).contains(cursor);
   }
 
   @Test
   void sameRowLoadedTwiceIsEqual() {
     UUID id = persisted();
 
-    ProcessedEvent first = QuarkusTransaction.requiringNew().call(() -> load(id));
-    ProcessedEvent second = QuarkusTransaction.requiringNew().call(() -> load(id));
+    IncidentCursor first = QuarkusTransaction.requiringNew().call(() -> load(id));
+    IncidentCursor second = QuarkusTransaction.requiringNew().call(() -> load(id));
 
     assertThat(first).isNotSameAs(second).isEqualTo(second).hasSameHashCodeAs(second);
     assertThat(first).isNotEqualTo(QuarkusTransaction.requiringNew().call(() -> load(persisted())));
@@ -52,33 +52,32 @@ class BaseEntityIdentityTest {
   @Test
   void uninitializedReferenceEqualsTheLoadedEntity() {
     UUID id = persisted();
-    ProcessedEvent loaded = QuarkusTransaction.requiringNew().call(() -> load(id));
+    IncidentCursor loaded = QuarkusTransaction.requiringNew().call(() -> load(id));
 
     QuarkusTransaction.requiringNew()
         .run(
             () -> {
-              ProcessedEvent reference = entityManager.getReference(ProcessedEvent.class, id);
+              IncidentCursor reference = entityManager.getReference(IncidentCursor.class, id);
               assertThat(Hibernate.isInitialized(reference)).isFalse();
               assertThat(reference).isEqualTo(loaded).hasSameHashCodeAs(loaded);
               assertThat(loaded).isEqualTo(reference);
             });
   }
 
-  private static ProcessedEvent unsaved() {
-    ProcessedEvent event = new ProcessedEvent();
-    event.setEventId(UUID.randomUUID());
-    event.setIncidentId(UUID.randomUUID());
-    event.setIncidentVersion(1);
-    return event;
+  private static IncidentCursor unsaved() {
+    IncidentCursor cursor = new IncidentCursor();
+    cursor.setIncidentId(UUID.randomUUID());
+    cursor.setLastVersion(1);
+    return cursor;
   }
 
   private UUID persisted() {
-    ProcessedEvent event = unsaved();
-    QuarkusTransaction.requiringNew().run(() -> entityManager.persist(event));
-    return event.getId();
+    IncidentCursor cursor = unsaved();
+    QuarkusTransaction.requiringNew().run(() -> entityManager.persist(cursor));
+    return cursor.getId();
   }
 
-  private ProcessedEvent load(UUID id) {
-    return entityManager.find(ProcessedEvent.class, id);
+  private IncidentCursor load(UUID id) {
+    return entityManager.find(IncidentCursor.class, id);
   }
 }

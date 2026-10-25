@@ -22,6 +22,7 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.ProcessingException;
 import java.time.Duration;
 import java.util.List;
+import java.util.OptionalLong;
 import java.util.UUID;
 import org.awaitility.core.ConditionTimeoutException;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -130,8 +131,8 @@ class NotificationFlowTest {
 
     kafka.sendEvent(incident, stateChanged(UUID.randomUUID(), incident, 5, "ESCALATED", "X"));
     kafka.sendEvent(incident, stateChanged(older, incident, 4, "AWAITING_APPROVAL", null));
+    awaitProcessedAfter(incident);
 
-    await().atMost(TIMEOUT).until(() -> tables.processed(older));
     assertThat(tables.notifications(older)).isEmpty();
     awaitMail(ON_CALL, incident);
     assertThat(mailsFor(APPROVER_1, incident)).isEmpty();
@@ -140,14 +141,16 @@ class NotificationFlowTest {
   @Test
   void otherEventTypesAndUnreadableEventsAreSkippedWithoutRecording() {
     UUID incident = UUID.randomUUID();
-    UUID occurrence = UUID.randomUUID();
 
-    kafka.sendEvent(incident, occurrenceRecorded(occurrence, incident, 2));
+    // The occurrence event carries version 1 like the state event after it; had it been
+    // recorded, the state event would count as already seen and notify nobody.
+    kafka.sendEvent(incident, occurrenceRecorded(UUID.randomUUID(), incident, 2));
     kafka.sendEvent(incident, "not json");
     kafka.sendEvent(incident, "{\"eventType\": \"incident.state-changed\", \"state\": \"x\"}");
-    awaitProcessedAfter(incident);
+    kafka.sendEvent(
+        incident, stateChanged(UUID.randomUUID(), incident, 1, "AWAITING_APPROVAL", null));
 
-    assertThat(tables.processed(occurrence)).isFalse();
+    awaitMail(APPROVER_1, incident);
   }
 
   @Test
@@ -157,7 +160,7 @@ class NotificationFlowTest {
 
     kafka.sendEvent(incident, stateChanged(event, incident, 1, "TRIAGED", null));
 
-    await().atMost(TIMEOUT).until(() -> tables.processed(event));
+    await().atMost(TIMEOUT).until(() -> tables.cursor(incident).isPresent());
     assertThat(tables.notifications(event)).isEmpty();
   }
 
@@ -179,10 +182,10 @@ class NotificationFlowTest {
 
   /** Sends a state event without a rule and tells whether it was recorded. */
   private boolean processedAfterSending(UUID incident) {
-    UUID probe = UUID.randomUUID();
-    kafka.sendEvent(incident, stateChanged(probe, incident, Long.MAX_VALUE, "TRIAGED", null));
+    kafka.sendEvent(
+        incident, stateChanged(UUID.randomUUID(), incident, Long.MAX_VALUE, "TRIAGED", null));
     try {
-      await().atMost(Duration.ofSeconds(3)).until(() -> tables.processed(probe));
+      await().atMost(Duration.ofSeconds(3)).until(() -> tables.cursor(incident).isPresent());
       return true;
     } catch (ConditionTimeoutException e) {
       return false;
@@ -194,9 +197,11 @@ class NotificationFlowTest {
    * partition, so everything sent before it has been handled.
    */
   private void awaitProcessedAfter(UUID incident) {
-    UUID marker = UUID.randomUUID();
-    kafka.sendEvent(incident, stateChanged(marker, incident, Long.MAX_VALUE, "TRIAGED", null));
-    await().atMost(TIMEOUT).until(() -> tables.processed(marker));
+    kafka.sendEvent(
+        incident, stateChanged(UUID.randomUUID(), incident, Long.MAX_VALUE, "TRIAGED", null));
+    await()
+        .atMost(TIMEOUT)
+        .until(() -> tables.cursor(incident).equals(OptionalLong.of(Long.MAX_VALUE)));
   }
 
   private Mail awaitMail(String recipient, UUID incident) {

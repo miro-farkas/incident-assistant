@@ -10,9 +10,9 @@ public sealed interface EventRecordingResult {
    */
   record Recorded(int notifications) implements EventRecordingResult {}
 
-  /** The event was processed before; nothing changed. */
-  record Duplicate() implements EventRecordingResult {}
-
-  /** A newer version of the incident was seen before; the event is recorded, nothing sent. */
+  /**
+   * The incident's version was already seen, by this event before (a redelivery) or by a newer one;
+   * nothing changed.
+   */
   record Outdated(long lastVersion) implements EventRecordingResult {}
 }

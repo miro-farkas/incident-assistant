@@ -3,21 +3,8 @@
 -- Every table carries the BaseEntity columns (P-0014): id (UUIDv7), created_at,
 -- updated_at and version (optimistic locking).
 
--- Events already handled, so a redelivered event is skipped. created_at is the time it
--- was processed. Append-only.
-create table processed_event (
-    id               uuid        not null,
-    created_at       timestamptz not null,
-    updated_at       timestamptz not null,
-    version          bigint      not null,
-    event_id         uuid        not null,
-    incident_id      uuid        not null,
-    incident_version bigint      not null,
-    constraint pk_processed_event primary key (id),
-    constraint uq_processed_event_event_id unique (event_id)
-);
-
--- Newest incident version seen, so an older event that arrives late is skipped.
+-- Newest incident version seen per incident. An event whose version is not newer, a
+-- redelivered one or an older one arriving late, is skipped (P-0020).
 create table incident_cursor (
     id           uuid        not null,
     created_at   timestamptz not null,

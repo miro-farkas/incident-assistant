@@ -42,22 +42,22 @@ class EventRecorderTest {
   }
 
   @Test
-  void duplicateEventChangesNothing() {
+  void redeliveredEventChangesNothing() {
     IncidentStateEventDto event = event(UUID.randomUUID(), 3, "AWAITING_APPROVAL");
     ingestion.ingest(event);
 
-    assertThat(ingestion.ingest(event)).isInstanceOf(EventRecordingResult.Duplicate.class);
+    assertThat(ingestion.ingest(event)).isEqualTo(new EventRecordingResult.Outdated(3));
     assertThat(tables.notifications(event.eventId())).hasSize(2);
   }
 
   @Test
-  void olderEventIsRecordedButNotifiesNobody() {
+  void olderEventNotifiesNobody() {
     UUID incident = UUID.randomUUID();
     ingestion.ingest(event(incident, 5, "TRIAGED"));
     IncidentStateEventDto older = event(incident, 4, "AWAITING_APPROVAL");
 
     assertThat(ingestion.ingest(older)).isEqualTo(new EventRecordingResult.Outdated(5));
-    assertThat(tables.processed(older.eventId())).isTrue();
+    assertThat(tables.cursor(incident)).hasValue(5);
     assertThat(tables.notifications(older.eventId())).isEmpty();
   }
 
@@ -83,7 +83,7 @@ class EventRecorderTest {
 
     assertThat(results)
         .containsExactlyInAnyOrder(
-            new EventRecordingResult.Recorded(2), new EventRecordingResult.Duplicate());
+            new EventRecordingResult.Recorded(2), new EventRecordingResult.Outdated(3));
     assertThat(tables.notifications(event.eventId())).hasSize(2);
   }
 

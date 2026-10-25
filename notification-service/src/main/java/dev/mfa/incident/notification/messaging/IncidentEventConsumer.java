@@ -58,11 +58,9 @@ public class IncidentEventConsumer {
           LOG.debugf(
               "Recorded event %s of incident %s: %d notifications",
               event.eventId(), event.incidentId(), recorded.notifications());
-      case EventRecordingResult.Duplicate duplicate ->
-          LOG.debugf("Skipped duplicate event %s", event.eventId());
       case EventRecordingResult.Outdated outdated ->
           LOG.debugf(
-              "Skipped event %s of incident %s: version %d, already seen %d",
+              "Skipped event %s of incident %s: version %d, seen up to %d",
               event.eventId(), event.incidentId(), event.incidentVersion(), outdated.lastVersion());
     }
   }

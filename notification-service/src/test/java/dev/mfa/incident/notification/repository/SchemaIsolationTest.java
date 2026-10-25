@@ -58,8 +58,7 @@ class SchemaIsolationTest {
         .containsExactly(
             "notification.flyway_schema_history",
             "notification.incident_cursor",
-            "notification.notification",
-            "notification.processed_event");
+            "notification.notification");
   }
 
   @Test

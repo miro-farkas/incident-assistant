@@ -25,7 +25,6 @@ workflow escalated an incident. Incident state changes arrive on
   the `public` schema of `incident-assistant-app`. In production it connects as role
   `notification_service`, which owns `notification` and has no rights on other schemas.
   Tables:
-  - `processed_event` (`event_id` PK, `incident_id`, `incident_version`, `processed_at`);
   - `incident_cursor` (`incident_id` PK, `last_version`);
   - `notification` (`id`, `event_id`, `channel`, `recipient`, `status`
     `PENDING|SENT|FAILED`, `attempts`, `next_attempt_at`, `last_error`, `sent_at`;
@@ -54,9 +53,12 @@ workflow escalated an incident. Incident state changes arrive on
   are untrusted: control characters are replaced, values are cut at 100 characters, the HTML
   template escapes them. A missing value, and every value of the minimal message, is
   `unknown`.
+- Deduplication by version only (P-0020 as amended): a redelivered state event has the
+  version the cursor already holds and is skipped like an older one; there is no
+  `processed_event` table. Occurrence events (A-0012) keep the incident version unchanged
+  and are therefore never recorded (see Consequences).
 - Tables follow P-0014: every table has the `BaseEntity` columns with `id` as primary key, so
-  `processed_event.event_id` and `incident_cursor.incident_id` are unique keys, and
-  `processed_event.created_at` is the processing time. `notification` also stores
+  `incident_cursor.incident_id` is a unique key. `notification` also stores
   `incident_id`, `rule`, `state`, `reason_code` and `occurred_at` of its event, so sending
   does not depend on the event again.
 - Rules: `notification.rules.<name>.state`, `.recipients` (name of a list in
@@ -66,8 +68,9 @@ workflow escalated an incident. Incident state changes arrive on
   `templates/notification/message.txt` and `.html`.
 - Consumer: group `notification-service`, `auto.offset.reset=latest` (a first deployment does
   not notify about past events), offset committed after the recording transaction. Recording
-  is retried (fault tolerance); a concurrent recording of the same event loses on the unique
-  key and sees the committed one on retry. An unreadable event is skipped with a warning;
+  is retried (fault tolerance). Events of one incident are compared under the cursor's row
+  lock; two first events of one incident at once collide on the cursor's unique key, and
+  the retry then compares against the committed one. An unreadable event is skipped with a warning;
   when recording still fails after its retries the channel stops and readiness reports it.
 - Sender: claims due rows with `FOR UPDATE SKIP LOCKED` in a short transaction, counts the
   attempt and pushes `next_attempt_at` out by `notification.sender.claim-timeout` (default

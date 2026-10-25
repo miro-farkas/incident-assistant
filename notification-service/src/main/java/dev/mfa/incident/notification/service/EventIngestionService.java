@@ -19,9 +19,9 @@ public class EventIngestionService {
   }
 
   /**
-   * Failures such as a lost database connection or a concurrent recording of the same event are
-   * retried, each attempt in a new transaction (limits in {@code application.properties}); when the
-   * retries are used up the exception reaches the caller.
+   * Failures such as a lost database connection or a concurrent first event of the same incident
+   * are retried, each attempt in a new transaction (limits in {@code application.properties}); when
+   * the retries are used up the exception reaches the caller.
    */
   @Retry
   public EventRecordingResult ingest(IncidentStateEventDto event) {
