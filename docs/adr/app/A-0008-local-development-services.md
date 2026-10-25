@@ -55,6 +55,10 @@ backlog items. Tests start these through Dev Services with the configuration in
 - Mailpit (added by INC-016, A-0011): service `mailpit`, image `axllent/mailpit` (pinned),
   SMTP on host port `1025`, web UI on `8025`, no volume (mails live in memory). Dev mode of
   `notification-service` sends to it; tests use the mailer's mock mailbox.
+- Ollama (added by INC-005, A-0013): service `ollama`, image `ollama/ollama` (pinned), host
+  port `11434`, models in volume `incident-assistant-ollama`. Dev mode of
+  `incident-assistant-app` finds it at the default address and pulls the embedding model on
+  first use; tests use a fake embedding model.
 
 ## Alternatives considered
 - `apache/kafka-native` (the current Dev Services image): faster start, but no CLI for

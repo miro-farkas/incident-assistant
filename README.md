@@ -82,6 +82,7 @@ and starts faster.
 | Kafka | `localhost:9092` (containers on the compose network: `kafka:19092`) | single node, KRaft; topic auto-creation off |
 | Keycloak | `http://localhost:8180`, realm `incident-assistant`; admin console user/password `admin` | data in schema `keycloak` of PostgreSQL |
 | Mailpit | SMTP `localhost:1025`, web UI `http://localhost:8025` | mails sent by `notification-service` in dev mode; in memory only |
+| Ollama | `http://localhost:11434` | embedding model `nomic-embed-text` for the knowledge base, pulled on first use; models in volume `incident-assistant-ollama` |
 
 `kafka-init` creates the topics once the broker is healthy and exits; `postgres-init`
 creates the `keycloak` schema before Keycloak starts. Keycloak imports
@@ -154,8 +155,9 @@ session cookie instead, see [Web UI](#web-ui)), errors as RFC 9457 Problem Detai
 | `GET /api/v1/incidents/stream` | `incident-viewer` or `incident-approver` | Server-Sent Events: every incident event from now on (A-0009) |
 | `GET /api/v1/me` | any authenticated user | display name and `incident-*` roles |
 
-The local realm has two users (passwords as user names, local only): `viewer`
-(`incident-viewer`) and `approver` (both roles). The client `incident-assistant` allows the
+The local realm has three users (passwords as user names, local only): `viewer`
+(`incident-viewer`), `approver` (both incident roles) and `knowledge-admin`
+(`knowledge-admin`). The client `incident-assistant` allows the
 password grant for local manual testing:
 
 ```shell
@@ -224,6 +226,59 @@ How the UI is built:
 | Property | Environment variable | Default | Description |
 |---|---|---|---|
 | `quarkus.oidc.credentials.secret` | `OIDC_CLIENT_SECRET` | dev: local realm secret; prod: required | Secret of the confidential client `incident-assistant`, used to redeem the login code. Also derives the keys of the state and session cookies; use at least 32 characters, otherwise the state key is generated per instance and a login started on one instance fails on another. |
+
+### Knowledge base
+
+Runbooks and postmortems in `knowledge/` (A-0004, A-0013, P-0021): Markdown with front matter
+
+```yaml
+---
+service: checkout          # optional; without it the document is general
+type: runbook              # runbook or postmortem
+title: Checkout service runbook
+updated: 2026-10-20
+---
+```
+
+Ingestion splits each file at headings `#` to `###` (long sections at paragraphs), embeds the
+parts with Ollama `nomic-embed-text` and stores them in PostgreSQL with pgvector (tables
+`knowledge_document`, `knowledge_segment`). It is idempotent: unchanged files are skipped,
+changed ones re-embedded, deleted ones removed; a file with invalid front matter is reported
+and keeps its last good version. Dev mode ingests at startup; at any time:
+
+```shell
+TOKEN=$(curl -s -X POST http://localhost:8180/realms/incident-assistant/protocol/openid-connect/token \
+  -d grant_type=password -d client_id=incident-assistant \
+  -d client_secret=incident-assistant-local-secret -d username=knowledge-admin -d password=knowledge-admin \
+  | jq -r .access_token)
+curl -X POST -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/knowledge/ingestion
+```
+
+`POST /api/v1/knowledge/ingestion` (role `knowledge-admin`) answers with the counts `added`,
+`updated`, `unchanged`, `removed` and the `skipped` files with the reason; `409` while
+another run is in progress. A Keycloak that imported the realm earlier lacks the role and
+user: add them in the admin console or re-import the realm.
+
+The embedding model id is stored with every document. When it differs from the configured
+one, startup fails unless `incident.knowledge.ingest-on-startup` is on, which re-embeds
+everything. The retriever (used by the diagnosis step, INC-007) returns the most similar
+segments with title, path and heading, filtered by service (that service's documents plus
+general ones).
+
+Dev mode reuses a running compose project without adding services; if Ollama is missing,
+start it once with `docker compose -f compose-devservices.yml up -d ollama`.
+
+| Property | Environment variable | Default | Description |
+|---|---|---|---|
+| `incident.knowledge.directory` | `INCIDENT_KNOWLEDGE_DIRECTORY` | dev/test: `../knowledge` (repository root); prod: required | Directory with the Markdown documents, subdirectories included. A missing directory fails the ingestion and changes nothing. |
+| `incident.knowledge.ingest-on-startup` | `INCIDENT_KNOWLEDGE_INGEST_ON_STARTUP` | dev: `true`; otherwise `false` | Ingest when the application starts; also re-embeds after a model change. |
+| `incident.knowledge.max-segment-length` | `INCIDENT_KNOWLEDGE_MAX_SEGMENT_LENGTH` | `1500` | Longest segment in characters (200-8000). |
+| `incident.knowledge.retrieval.limit` / `.min-score` | `INCIDENT_KNOWLEDGE_RETRIEVAL_LIMIT` / `_MIN_SCORE` | `5` / `0.6` | Segments returned at most, and their lowest cosine similarity. |
+| `quarkus.langchain4j.ollama.base-url` | `OLLAMA_BASE_URL` | dev: `http://localhost:11434`; prod: required | Ollama server for embeddings. Calls time out after 30 s and are retried twice. |
+| `quarkus.langchain4j.ollama.embedding-model.model-id` | `QUARKUS_LANGCHAIN4J_OLLAMA_EMBEDDING_MODEL_MODEL_ID` | `nomic-embed-text` | Embedding model; changing it needs a re-ingestion. |
+
+The migration creates the PostgreSQL extension `vector`; in production the database role
+needs the right to do so, or the extension is created beforehand.
 
 ### Kafka topics
 

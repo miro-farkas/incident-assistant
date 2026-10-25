@@ -118,6 +118,24 @@ class KeycloakRealmTest {
   }
 
   @Test
+  void knowledgeAdminRunsTheIngestion() {
+    given()
+        .auth()
+        .oauth2(token("knowledge-admin"))
+        .when()
+        .post("/api/v1/knowledge/ingestion")
+        .then()
+        .statusCode(200);
+    given()
+        .auth()
+        .oauth2(token("approver"))
+        .when()
+        .post("/api/v1/knowledge/ingestion")
+        .then()
+        .statusCode(403);
+  }
+
+  @Test
   void invalidTokenIsUnauthorized() {
     given()
         .auth()

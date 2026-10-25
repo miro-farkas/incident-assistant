@@ -13,6 +13,10 @@
       {
         "name": "incident-approver",
         "description": "Approves or rejects remediation proposals (A-0006)"
+      },
+      {
+        "name": "knowledge-admin",
+        "description": "Runs the knowledge base ingestion (A-0004)"
       }
     ]
   },
@@ -70,6 +74,16 @@
       "lastName": "Approver",
       "credentials": [{ "type": "password", "value": "approver", "temporary": false }],
       "realmRoles": ["incident-viewer", "incident-approver"]
+    },
+    {
+      "username": "knowledge-admin",
+      "enabled": true,
+      "email": "knowledge-admin@incident-assistant.local",
+      "emailVerified": true,
+      "firstName": "Kim",
+      "lastName": "Knowledge",
+      "credentials": [{ "type": "password", "value": "knowledge-admin", "temporary": false }],
+      "realmRoles": ["knowledge-admin"]
     },
     {
       "username": "service-account-notification-service",

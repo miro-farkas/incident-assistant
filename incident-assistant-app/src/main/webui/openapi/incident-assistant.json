@@ -3,6 +3,8 @@
   "tags" : [ {
     "name" : "Incidents"
   }, {
+    "name" : "Knowledge"
+  }, {
     "name" : "User"
   } ],
   "components" : {
@@ -167,6 +169,33 @@
           }
         }
       },
+      "IngestionReportDto" : {
+        "type" : "object",
+        "properties" : {
+          "added" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "updated" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "unchanged" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "removed" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "skipped" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SkippedFile"
+            }
+          }
+        }
+      },
       "Instant" : {
         "type" : "string",
         "format" : "date-time",
@@ -228,6 +257,17 @@
             "$ref" : "#/components/schemas/MediaType"
           },
           "data" : { }
+        }
+      },
+      "SkippedFile" : {
+        "type" : "object",
+        "properties" : {
+          "path" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          }
         }
       },
       "StepDto" : {
@@ -569,6 +609,46 @@
         },
         "security" : [ {
           "SecurityScheme" : [ "incident-approver" ]
+        } ]
+      }
+    },
+    "/api/v1/knowledge/ingestion" : {
+      "post" : {
+        "summary" : "Ingest the knowledge directory now",
+        "description" : "Adds new documents, re-embeds changed ones, removes deleted ones and reports files that are not valid knowledge documents. Runs synchronously.",
+        "tags" : [ "Knowledge" ],
+        "responses" : {
+          "401" : {
+            "description" : "Not authenticated",
+            "content" : {
+              "application/problem+json" : { }
+            }
+          },
+          "403" : {
+            "description" : "Role missing",
+            "content" : {
+              "application/problem+json" : { }
+            }
+          },
+          "200" : {
+            "description" : "What the run did",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IngestionReportDto"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Another ingestion is running",
+            "content" : {
+              "application/problem+json" : { }
+            }
+          }
+        },
+        "security" : [ {
+          "SecurityScheme" : [ "knowledge-admin" ]
         } ]
       }
     },

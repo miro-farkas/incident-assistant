@@ -38,6 +38,7 @@ New ADRs use `platform/template.md` (skill `write-adr`).
 | [P-0018](platform/P-0018-live-updates-via-server-sent-events.md) | Live updates to browser clients via Server-Sent Events |
 | [P-0019](platform/P-0019-web-ui-served-by-the-service.md) | Web UI served by the service |
 | [P-0020](platform/P-0020-event-driven-notification-service.md) | Event-driven notification service |
+| [P-0021](platform/P-0021-vector-storage-with-own-entities.md) | Vector storage with own entities and an explicit model check |
 
 ## App
 
@@ -55,6 +56,7 @@ New ADRs use `platform/template.md` (skill `write-adr`).
 | [A-0010](app/A-0010-incident-ui.md) | Incident UI | P-0019, P-0018, P-0009 |
 | [A-0011](app/A-0011-notification-service.md) | Notification service | P-0020, P-0012, P-0009, P-0016 |
 | [A-0012](app/A-0012-incident-occurrence-event.md) | Incident occurrence event | P-0012, P-0003 |
+| [A-0013](app/A-0013-knowledge-base-storage-and-ingestion.md) | Knowledge base storage and ingestion | P-0005, P-0021, P-0008, P-0009, P-0016 |
 
 ## Former numbering
 

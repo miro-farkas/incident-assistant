@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import dev.mfa.incident.exception.DecisionNotAllowedException;
 import dev.mfa.incident.exception.IncidentNotFoundException;
 import dev.mfa.incident.exception.IncidentVersionConflictException;
+import dev.mfa.incident.exception.IngestionInProgressException;
 import dev.mfa.incident.exception.StreamLimitExceededException;
 import dev.mfa.incident.exception.UnknownIncidentStateException;
 import io.quarkus.security.AuthenticationFailedException;
@@ -53,6 +54,11 @@ public class ProblemMappers {
 
   @ServerExceptionMapper
   public Response decisionNotAllowed(DecisionNotAllowedException e) {
+    return problem(Response.Status.CONFLICT, e.getMessage());
+  }
+
+  @ServerExceptionMapper
+  public Response ingestionInProgress(IngestionInProgressException e) {
     return problem(Response.Status.CONFLICT, e.getMessage());
   }
 
