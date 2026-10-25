@@ -14,6 +14,10 @@ flowchart LR
     H -- login --> KC[[Keycloak]]
     APP -- token validation --> KC
     APP --> KO[(Kafka: ops.incidents.events.v1)]
+    KO --> NS[notification-service]
+    NS -- details, client credentials --> APP
+    NS --> PG
+    NS -- SMTP --> MAIL[[Mail server]]
 ```
 
 ## Workflow (hybrid)

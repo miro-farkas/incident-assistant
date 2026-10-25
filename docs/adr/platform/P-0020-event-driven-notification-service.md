@@ -18,8 +18,11 @@ cannot be taken back.
   database role that has rights only on its schema, so the separation is enforced by the
   database, not by convention. Consuming an event and recording what to send happen in
   one transaction:
-  - the event id is stored as processed; a duplicate is skipped;
-  - the last version seen per entity is stored; an older event is skipped;
+  - the last version seen per entity is stored; an event whose version is not newer is
+    skipped. This covers both a redelivered event (same version) and a late, older one, so
+    no separate record of processed event ids is kept (amended with INC-016). It relies
+    on the producer giving every event a consumer records its own, increasing version per
+    entity;
   - one pending notification per matching rule and recipient is written, unique per
     event and recipient.
   The offset is committed after the transaction.
@@ -49,6 +52,9 @@ cannot be taken back.
   for a few small tables; a schema with its own role gives the same ownership boundary.
 
 ## Consequences
+- Consumer state is one row per entity, not one per event. An event type that shares a
+  version with another (for example a version that does not change) cannot be recorded
+  this way; such a type needs its own deduplication first.
 - Delivery is at least once per recipient: a crash after the channel accepted a message
   and before it is marked sent resends it. The window is one message.
 - A notification can arrive before the details are available through the API; the

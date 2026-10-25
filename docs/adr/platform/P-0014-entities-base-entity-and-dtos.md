@@ -12,7 +12,8 @@ and versions, and services should never expose them.
 - **Entities contain no logic**: fields with JPA mapping annotations, the default no-arg
   constructor (mappers create entities with it), getters and setters. No factory methods,
   validation, state checks or mapping methods; all rules live in the `service` layer.
-  Generated values have getters only.
+  Generated values have getters only. The one behaviour is row identity in `BaseEntity`
+  (below).
 - **`BaseEntity`** (`@MappedSuperclass` in `model`), extended by every entity:
 
   | Field | Column | Notes |
@@ -27,6 +28,13 @@ and versions, and services should never expose them.
   (microseconds for PostgreSQL `timestamptz`), so a DTO built from a just-written entity
   equals the same row reloaded later. Instances' clocks must be NTP-synchronised; ordering
   never relies on timestamps.
+- **Equality is row identity**, implemented once in `BaseEntity` as `final` methods:
+  `equals` is true for the same entity class (`Hibernate.getClass`, so a lazy reference,
+  whether a proxy or, with bytecode enhancement, an uninitialized instance, equals its loaded
+  entity) and the same non-null id, both read through `getId()` (a final method runs
+  on the proxy itself, whose fields are empty); an entity without an id equals only itself.
+  `hashCode` is constant per entity class (`Hibernate.getClass(this).hashCode()`), so it does
+  not change when persisting assigns the id. Field values never take part in equality.
 - **Append-only tables also extend `BaseEntity`** for uniformity; their `updated_at` and
   `version` stay at the insert values. An outbox table (P-0003) additionally has a
   `sequence_number bigint generated always as identity` column for the relay, because
@@ -49,12 +57,19 @@ and versions, and services should never expose them.
   back with `RETURNING`; when the version check matches no row, Hibernate fails with "The
   database returned no natively generated values" instead of `OptimisticLockException`, so
   concurrent updates are no longer reported as conflicts.
+- Object identity (no `equals`/`hashCode`): correct inside one persistence context, where
+  Hibernate keeps one instance per row, but not across transactions or for detached entities.
+- Equality over all fields or a business key: changes when fields change, or makes two
+  rows with the same data equal.
 - MapStruct: less mapping code, but an annotation processor outside the Quarkus BOM, and
   generated code to debug for a handful of small mappings.
 - Returning entities from services (open-session-in-view): least code, but leaks lazy
   loading and persistence state into resources and messaging (P-0013).
 
 ## Consequences
+- Entities can be kept in hash-based collections and compared across persistence contexts;
+  a hash set of many entities of one class degrades to a list (one bucket), which is
+  acceptable because services hold few entities at a time.
 - Append-only entities are not mapped `@Immutable`: Hibernate cannot apply the `@Version`
   write lock to read-only entities. Repositories of append-only tables only insert.
 - `createdAt` and `updatedAt` of a new row are generated separately and may differ by a

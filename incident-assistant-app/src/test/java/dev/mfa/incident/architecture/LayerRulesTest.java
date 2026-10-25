@@ -113,6 +113,7 @@ class LayerRulesTest {
   static final ArchRule entitiesLiveInModel =
       classes().that(ENTITY).should().resideInAPackage("..model..");
 
+  /** Besides accessors only the row identity of BaseEntity, which is final (P-0014). */
   @ArchTest
   static final ArchRule entitiesHaveOnlyAccessors =
       methods()
@@ -120,6 +121,10 @@ class LayerRulesTest {
           .areDeclaredInClassesThat(ENTITY)
           .and()
           .arePublic()
+          .and()
+          .doNotHaveName("equals")
+          .and()
+          .doNotHaveName("hashCode")
           .should()
           .haveNameMatching("(get|set|is)[A-Z].*");
 

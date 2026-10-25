@@ -94,6 +94,29 @@ class KeycloakRealmTest {
         .body("roles", equalTo(List.of("incident-approver", "incident-viewer")));
   }
 
+  /**
+   * The service account of notification-service (A-0011) reads incidents with a client credentials
+   * token and cannot decide.
+   */
+  @Test
+  void notificationServiceAccountReadsButCannotDecide() {
+    IncidentDto pending = workflow.awaitingApproval();
+    String token =
+        keycloak.getClientAccessToken("notification-service", "notification-service-local-secret");
+
+    given().auth().oauth2(token).when().get(INCIDENTS + "/" + pending.id()).then().statusCode(200);
+    given()
+        .auth()
+        .oauth2(token)
+        .contentType(ContentType.JSON)
+        .header("If-Match", "\"" + pending.version() + "\"")
+        .body("{\"decision\": \"APPROVE\"}")
+        .when()
+        .post(INCIDENTS + "/" + pending.id() + "/decision")
+        .then()
+        .statusCode(403);
+  }
+
   @Test
   void invalidTokenIsUnauthorized() {
     given()

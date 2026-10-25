@@ -160,7 +160,7 @@ Acceptance criteria
   the column and the live update; the existing end-to-end test still passes.
 - Docs: A-0006 and A-0010 amended, README endpoint table.
 
-## INC-016 E-mail notifications — TODO
+## INC-016 E-mail notifications — DONE
 Covers A-0011, P-0020. Needs INC-009 (API, client credentials).
 
 Acceptance criteria
@@ -168,8 +168,8 @@ Acceptance criteria
   database (Flyway, own history table; no second database) and the platform conventions
   (layers, DTOs, Panache repositories, ArchUnit rules). Test proves the module's
   migrations and queries touch only its schema.
-- Consumer of `ops.incidents.events.v1`: event recorded, duplicate (`eventId`) and older
-  version skipped, pending notifications written per rule and recipient in one
+- Consumer of `ops.incidents.events.v1`: event recorded, duplicate and older version
+  skipped (by incident version, P-0020 as amended), pending notifications written per rule and recipient in one
   transaction.
 - Sender job with `SKIP LOCKED`, exponential backoff, max attempts, `FAILED` after the
   last attempt; safe with two instances.

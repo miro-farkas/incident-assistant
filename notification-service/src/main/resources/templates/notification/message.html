@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{subject}</title>
+</head>
+<body style="font-family: sans-serif; color: #1d232b;">
+  <p><strong>{subject}</strong></p>
+  <table cellpadding="4" cellspacing="0">
+    <tr><td>Incident</td><td>{incidentId}</td></tr>
+    <tr><td>State</td><td>{state}</td></tr>
+    {#if reasonCode}<tr><td>Reason</td><td>{reasonCode}</td></tr>{/if}
+    <tr><td>Time</td><td>{occurredAt}</td></tr>
+    {#if detailsAvailable}
+    <tr><td>Alert</td><td>{alertName}</td></tr>
+    <tr><td>Service</td><td>{service} (as reported by the alert)</td></tr>
+    <tr><td>Severity</td><td>{severity} (as reported by the alert)</td></tr>
+    {/if}
+  </table>
+  {#if !detailsAvailable}<p>Details are not available right now; open the incident for them.</p>{/if}
+  <p><a href="{link}">Open the incident</a></p>
+  <p style="color: #5b6573;">This message was sent by incident-assistant.</p>
+</body>
+</html>

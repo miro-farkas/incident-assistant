@@ -15,6 +15,7 @@
     <modules>
         <module>incident-assistant-app</module>
         <module>ops-tools-mcp</module>
+        <module>notification-service</module>
         <module>alert-producer</module>
     </modules>
 
