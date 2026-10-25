@@ -71,6 +71,21 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-oidc</artifactId>
         </dependency>
+        <!-- Embedding model for the knowledge base (A-0013, P-0008) -->
+        <dependency>
+            <groupId>io.quarkiverse.langchain4j</groupId>
+            <artifactId>quarkus-langchain4j-ollama</artifactId>
+        </dependency>
+        <!-- pgvector columns in entities (P-0021) -->
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-vector</artifactId>
+        </dependency>
+        <!-- YAML front matter of knowledge documents (A-0013) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+        </dependency>
         <!-- Builds, tests and serves the web UI in src/main/webui (P-0019) -->
         <dependency>
             <groupId>io.quarkiverse.quinoa</groupId>

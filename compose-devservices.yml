@@ -132,8 +132,19 @@ services:
       - "1025:1025"
       - "8025:8025"
 
+  # Embedding model server for the knowledge base (A-0013). Dev mode pulls the model on first use;
+  # models stay in the volume across restarts.
+  ollama:
+    image: ollama/ollama:0.40.6
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+
 volumes:
   pgdata:
     name: incident-assistant-pgdata
   kafka-data:
     name: incident-assistant-kafka
+  ollama-models:
+    name: incident-assistant-ollama

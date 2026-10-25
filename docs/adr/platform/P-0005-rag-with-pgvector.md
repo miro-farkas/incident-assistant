@@ -29,5 +29,6 @@ mostly documents that change rarely and are versioned in Git.
   it and cannot refine the query.
 
 ## Consequences
+- Storage of documents and segments and the startup model check: P-0021.
 - Changing the embedding model requires full re-ingestion; the embedding model id is stored
   with each segment and checked at startup.

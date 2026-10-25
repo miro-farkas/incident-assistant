@@ -183,7 +183,7 @@ Acceptance criteria
   mock mailbox with the expected subject and link.
 - README: module, configuration, how to see mails locally.
 
-## INC-005 Knowledge base ingestion (RAG) — TODO
+## INC-005 Knowledge base ingestion (RAG) — DONE
 Covers A-0004, P-0005.
 
 Acceptance criteria
