@@ -5,7 +5,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.OptimisticLock;
 import org.hibernate.type.SqlTypes;
 
 /** An incident and its current workflow state. Changed only by the service layer. */
@@ -27,6 +29,16 @@ public class Incident extends BaseEntity {
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "alert_payload", nullable = false, updatable = false)
   private String alertPayload;
+
+  /** Instance working on the incident (P-0003); {@code null} when nobody does. */
+  @OptimisticLock(excluded = true)
+  @Column(name = "lease_owner", length = 64)
+  private String leaseOwner;
+
+  /** End of the lease; afterwards any instance may take the incident. */
+  @OptimisticLock(excluded = true)
+  @Column(name = "lease_expires_at")
+  private Instant leaseExpiresAt;
 
   public String getSource() {
     return source;
@@ -58,5 +70,21 @@ public class Incident extends BaseEntity {
 
   public void setAlertPayload(String alertPayload) {
     this.alertPayload = alertPayload;
+  }
+
+  public String getLeaseOwner() {
+    return leaseOwner;
+  }
+
+  public void setLeaseOwner(String leaseOwner) {
+    this.leaseOwner = leaseOwner;
+  }
+
+  public Instant getLeaseExpiresAt() {
+    return leaseExpiresAt;
+  }
+
+  public void setLeaseExpiresAt(Instant leaseExpiresAt) {
+    this.leaseExpiresAt = leaseExpiresAt;
   }
 }

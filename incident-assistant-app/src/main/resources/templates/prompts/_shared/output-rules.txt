@@ -1,0 +1,5 @@
+Output rules:
+- Answer with one JSON object that matches the requested schema exactly, and nothing else:
+  no explanation, no Markdown, no code fence.
+- Use only the allowed values for fields with a fixed set of values, written exactly as given.
+- Plain text in text fields: no Markdown, no HTML, no line breaks.

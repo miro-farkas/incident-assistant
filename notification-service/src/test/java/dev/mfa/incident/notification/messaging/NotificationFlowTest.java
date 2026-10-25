@@ -78,6 +78,7 @@ class NotificationFlowTest {
           .isEqualTo("[incident-assistant] Approval needed: checkout (critical)");
       assertThat(mail.getText())
           .contains(incident.toString(), "AWAITING_APPROVAL", "HighErrorRate", UI + incident)
+          .contains("checkout (as reported by the alert)")
           .doesNotContain(IncidentFixtures.SUMMARY);
       assertThat(mail.getHtml())
           .contains("href=\"" + UI + incident + "\"")
@@ -92,6 +93,21 @@ class NotificationFlowTest {
         .extracting(NotificationRow::recipient, NotificationRow::rule)
         .containsExactly(
             tuple(APPROVER_1, "approval-needed"), tuple(APPROVER_2, "approval-needed"));
+  }
+
+  @Test
+  void triagedServiceAndSeverityReplaceTheAlertsOwn() {
+    UUID incident = UUID.randomUUID();
+    when(api.get(eq(incident)))
+        .thenReturn(IncidentFixtures.triaged("HighErrorRate", "checkout", "HIGH"));
+
+    kafka.sendEvent(
+        incident, stateChanged(UUID.randomUUID(), incident, 3, "AWAITING_APPROVAL", null));
+
+    Mail mail = awaitMail(APPROVER_1, incident);
+    assertThat(mail.getSubject())
+        .isEqualTo("[incident-assistant] Approval needed: checkout (HIGH)");
+    assertThat(mail.getText()).contains("checkout (triaged)").doesNotContain("reported-service");
   }
 
   @Test

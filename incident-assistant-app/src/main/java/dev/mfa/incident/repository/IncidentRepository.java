@@ -11,6 +11,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.OptimisticLockException;
 import jakarta.persistence.PersistenceException;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -52,6 +53,26 @@ public class IncidentRepository implements PanacheRepositoryBase<Incident, UUID>
   /** Number of incidents in the given states; all incidents when {@code states} is empty. */
   public long countByStates(Set<IncidentState> states) {
     return states.isEmpty() ? count() : count("state in ?1", states);
+  }
+
+  /**
+   * Incidents in {@code states} without a lease or with one expired at {@code now}, oldest first,
+   * locked until the transaction ends. Rows other transactions hold are skipped ({@code SKIP
+   * LOCKED}), so executors on several instances claim disjoint incidents without waiting (index
+   * {@code ix_incident_claimable}).
+   */
+  @SuppressWarnings("unchecked")
+  public List<Incident> lockClaimable(Set<IncidentState> states, Instant now, int limit) {
+    return getEntityManager()
+        .createNativeQuery(
+            "select * from incident where state in (:states)"
+                + " and (lease_expires_at is null or lease_expires_at <= :now)"
+                + " order by created_at limit :limit for update skip locked",
+            Incident.class)
+        .setParameter("states", states.stream().map(IncidentState::name).toList())
+        .setParameter("now", now)
+        .setParameter("limit", limit)
+        .getResultList();
   }
 
   /**

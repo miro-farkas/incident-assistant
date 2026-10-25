@@ -57,6 +57,11 @@ public class MessageRenderer {
     data.put("service", value(details.map(IncidentDetailsDto::service)));
     data.put("severity", value(details.map(IncidentDetailsDto::severity)));
     data.put("alertName", value(details.map(IncidentDetailsDto::alertName)));
+    data.put(
+        "assessment",
+        details.map(IncidentDetailsDto::triaged).orElse(false)
+            ? "triaged"
+            : "as reported by the alert");
     data.put("state", notification.state());
     data.put("reasonCode", notification.reasonCode() == null ? "" : notification.reasonCode());
     data.put("detailsAvailable", details.isPresent());

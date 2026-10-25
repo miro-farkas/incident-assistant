@@ -14,6 +14,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
  * @param alert the validated alert as stored ({@code jsonb}), serialized as embedded JSON
  * @param occurrenceCount repeated alerts received while the incident was open (A-0003)
  * @param steps executed steps in the order they ran
+ * @param triage result of the latest successful triage step (A-0014); {@code null} before one
  * @param decision the approval decision; {@code null} until one is made
  */
 public record IncidentDetailDto(
@@ -29,4 +30,5 @@ public record IncidentDetailDto(
         String alert,
     long occurrenceCount,
     List<StepDto> steps,
+    TriageResult triage,
     ApprovalDecisionDto decision) {}

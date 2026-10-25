@@ -36,9 +36,16 @@ public class IncidentDetailsService {
   public Optional<IncidentDetailsDto> lookup(UUID incidentId) {
     IncidentDetailResponse detail = api.get(incidentId);
     Map<String, Object> alert = detail.alert() == null ? Map.of() : detail.alert();
+    String alertName = text(alert.get("alertName"));
+    IncidentDetailResponse.Triage triage = detail.triage();
+    if (triage != null) {
+      return Optional.of(
+          new IncidentDetailsDto(
+              alertName, text(triage.affectedService()), text(triage.severity()), true));
+    }
     return Optional.of(
         new IncidentDetailsDto(
-            text(alert.get("alertName")), text(alert.get("service")), text(alert.get("severity"))));
+            alertName, text(alert.get("service")), text(alert.get("severity")), false));
   }
 
   Optional<IncidentDetailsDto> unavailable(UUID incidentId, Throwable failure) {

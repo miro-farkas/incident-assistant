@@ -96,7 +96,8 @@ public class IncidentService {
   }
 
   /**
-   * Records a step result and moves the incident to {@code targetState}.
+   * Records a step result and moves the incident to {@code targetState}; releases the executor's
+   * lease (A-0014).
    *
    * @param expectedVersion incident version the step was computed from
    * @param reasonCode required when {@code targetState} requires one (see {@link
@@ -127,6 +128,8 @@ public class IncidentService {
     IncidentStateMachine.requireTransition(previousState, targetState);
 
     incident.setState(targetState);
+    incident.setLeaseOwner(null);
+    incident.setLeaseExpiresAt(null);
     IncidentStep step =
         stepMapper.toEntity(incidentId, result, previousState, targetState, reasonCode);
     steps.persist(step);

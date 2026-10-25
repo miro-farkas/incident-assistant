@@ -63,6 +63,29 @@ public class WorkflowTables {
                     .toList());
   }
 
+  /** Lease columns of an incident (A-0014). */
+  public record LeaseRow(String owner, Instant expiresAt, long version) {}
+
+  public LeaseRow lease(UUID incidentId) {
+    return QuarkusTransaction.requiringNew()
+        .call(
+            () -> {
+              Object[] row =
+                  (Object[])
+                      entityManager
+                          .createNativeQuery(
+                              "select lease_owner, lease_expires_at, version from incident"
+                                  + " where id = :incidentId",
+                              Object[].class)
+                          .setParameter("incidentId", incidentId)
+                          .getSingleResult();
+              return new LeaseRow(
+                  (String) row[0],
+                  row[1] == null ? null : instant(row[1]),
+                  ((Number) row[2]).longValue());
+            });
+  }
+
   /** Outbox events of one incident in relay order. */
   public List<OutboxEvent> outboxEvents(UUID incidentId) {
     return QuarkusTransaction.requiringNew()

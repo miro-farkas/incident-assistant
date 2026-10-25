@@ -5,19 +5,22 @@ description: Use when creating or changing a quarkus-langchain4j AI service, pro
 
 # AI service conventions (P-0007, P-0008)
 
-## Structure per AI service
+## Structure per AI service (package `ai`, P-0013 as amended by A-0014)
 ```
-src/main/java/dev/mfa/incident/<feature>/
-  <Name>Assistant.java          // @RegisterAiService interface
-  <Name>Result.java             // record used as structured output
+src/main/java/dev/mfa/incident/ai/
+  <Name>Assistant.java          // @RegisterAiService interface, used only by `service`
   <Name>OutputGuardrail.java    // validates the record
+src/main/java/dev/mfa/incident/dto/
+  <Name>Result.java             // record used as structured output (also stored and returned)
 src/main/resources/prompts/<name>/
-  prompt.properties             // id=<name>, version=<n>
+  prompt.properties             // id=<name>, version=<n>; read with PromptVersions.of(name)
   system.txt                    // stable instructions (Qute)
   user.txt                      // per-call data in delimited untrusted sections
-src/main/resources/prompts/_shared/
-  safety-rules.txt, output-rules.txt
+src/main/resources/templates/prompts/_shared/
+  safety-rules.txt, output-rules.txt   // {#include prompts/_shared/safety-rules /}
 ```
+Shared fragments live under `templates/`, because Qute resolves `{#include}` there. Missing
+input values are passed as `null` and printed with `{name ?: 'not reported'}`.
 
 ## Rules
 - Never inline prompt text in Java. Use `fromResource`.

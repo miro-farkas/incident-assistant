@@ -54,12 +54,17 @@ public final class WorkflowFixtures {
         "https://prometheus.example.com/graph?g0.expr=http_errors");
   }
 
+  /** Output of a successful triage step (A-0014). */
+  public static final String TRIAGE_OUTPUT =
+      "{\"severity\": \"HIGH\", \"category\": \"DEPLOYMENT\", \"affectedService\":"
+          + " \"checkout\", \"summary\": \"Error rate of checkout rose after a release.\"}";
+
   public static StepResultDto succeeded(StepType type) {
     return new StepResultDto(
         type,
         StepStatus.SUCCEEDED,
         "{\"step\": \"" + type + "\"}",
-        "{\"result\": \"ok\"}",
+        type == StepType.TRIAGE ? TRIAGE_OUTPUT : "{\"result\": \"ok\"}",
         MODEL_USAGE,
         STARTED_AT,
         FINISHED_AT,

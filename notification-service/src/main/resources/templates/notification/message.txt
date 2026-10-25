@@ -5,8 +5,8 @@ State:      {state}
 {#if reasonCode}Reason:     {reasonCode}
 {/if}Time:       {occurredAt}
 {#if detailsAvailable}Alert:      {alertName}
-Service:    {service} (as reported by the alert)
-Severity:   {severity} (as reported by the alert)
+Service:    {service} ({assessment})
+Severity:   {severity} ({assessment})
 {#else}Details are not available right now; open the incident for them.
 {/if}
 Open the incident: {link}

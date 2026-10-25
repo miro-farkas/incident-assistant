@@ -1,11 +1,13 @@
 package dev.mfa.incident.mapper;
 
 import dev.mfa.incident.dto.ApprovalDecisionDto;
+import dev.mfa.incident.dto.ClaimedIncidentDto;
 import dev.mfa.incident.dto.IncidentDetailDto;
 import dev.mfa.incident.dto.IncidentDto;
 import dev.mfa.incident.dto.IncidentSummaryDto;
 import dev.mfa.incident.dto.NewIncidentDto;
 import dev.mfa.incident.dto.StepDto;
+import dev.mfa.incident.dto.TriageResult;
 import dev.mfa.incident.model.Incident;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.util.List;
@@ -33,6 +35,11 @@ public class IncidentMapper {
         incident.getUpdatedAt());
   }
 
+  public ClaimedIncidentDto toClaimed(Incident incident) {
+    return new ClaimedIncidentDto(
+        incident.getId(), incident.getState(), incident.getVersion(), incident.getAlertPayload());
+  }
+
   public IncidentSummaryDto toSummaryDto(Incident incident, long occurrenceCount) {
     return new IncidentSummaryDto(
         incident.getId(),
@@ -46,10 +53,15 @@ public class IncidentMapper {
   }
 
   /**
+   * @param triage {@code null} before a successful triage
    * @param decision {@code null} when no decision was made
    */
   public IncidentDetailDto toDetailDto(
-      Incident incident, long occurrenceCount, List<StepDto> steps, ApprovalDecisionDto decision) {
+      Incident incident,
+      long occurrenceCount,
+      List<StepDto> steps,
+      TriageResult triage,
+      ApprovalDecisionDto decision) {
     return new IncidentDetailDto(
         incident.getId(),
         incident.getSource(),
@@ -61,6 +73,7 @@ public class IncidentMapper {
         incident.getAlertPayload(),
         occurrenceCount,
         steps,
+        triage,
         decision);
   }
 }

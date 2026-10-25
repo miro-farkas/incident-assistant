@@ -41,6 +41,30 @@ describe("IncidentDetailPage", () => {
     expect(screen.getByText("errors")).toBeInTheDocument();
   });
 
+  it("shows the triage result of a triaged incident instead of the generic output", async () => {
+    stubFetch(
+      json(
+        incident({
+          triage: {
+            severity: "HIGH",
+            category: "DEPLOYMENT",
+            affectedService: "checkout",
+            summary: "<b>Errors</b> since the last release.",
+          },
+        }),
+      ),
+    );
+    renderDetail(VIEWER);
+
+    const triage = await screen.findByTestId("triage-result");
+    expect(triage).toHaveTextContent("HIGH");
+    expect(triage).toHaveTextContent("DEPLOYMENT");
+    expect(triage).toHaveTextContent("checkout");
+    expect(triage).toHaveTextContent("<b>Errors</b> since the last release.");
+    expect(triage.querySelector("b")).toBeNull();
+    expect(screen.queryByText("errors")).not.toBeInTheDocument();
+  });
+
   it("renders markup in alert fields as text", async () => {
     const hostile = '<img src="x" onerror="alert(1)">';
     stubFetch(

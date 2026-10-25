@@ -1,6 +1,6 @@
 # P-0013: Layered package structure
 
-- Status: Accepted
+- Status: Accepted (amended with A-0014: `ai` package)
 - Date: 2026-10-18
 
 ## Context
@@ -24,12 +24,15 @@ feature isolation inside one module buys little.
   | `messaging` | Kafka consumers and the outbox relay |
   | `config` | `@ConfigMapping` interfaces and CDI producers |
   | `health` | Health checks |
+  | `ai` | AI service interfaces (`@RegisterAiService`) and their guardrails; structured output records are DTOs in `dto` |
 
   Packages are created when the first class needs them; no empty placeholders. Further
   kinds of classes (AI services, guardrails, MCP clients) get their package in the ADR that
   introduces them, following the same layering.
 - Allowed dependencies (enforced with ArchUnit `layeredArchitecture()`):
   - `resource`, `messaging`, `health` → `service`, `dto`, `config`, `exception`.
+  - `ai` → `dto`, `config`; used only by `service`, so a step's model call, its recording
+    and its failure handling stay in one service method.
   - `service` → `repository`, `mapper`, `model`, `dto`, `config`, `exception`.
   - `repository` → `model`, `exception`.
   - `mapper` → `model`, `dto`.

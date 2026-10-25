@@ -29,7 +29,7 @@ class MessageRendererTest {
     NotificationMessageDto message =
         renderer.render(
             pending("escalated", "ESCALATED", "DIAGNOSIS_BUDGET_EXCEEDED"),
-            Optional.of(new IncidentDetailsDto("HighErrorRate", "checkout", "critical")));
+            Optional.of(new IncidentDetailsDto("HighErrorRate", "checkout", "critical", true)));
 
     assertThat(message.recipient()).isEqualTo("on-call@example.test");
     assertThat(message.subject())
@@ -56,7 +56,8 @@ class MessageRendererTest {
                 new IncidentDetailsDto(
                     "<script>alert(1)</script>",
                     "checkout\r\nBcc: attacker@example.test",
-                    "x".repeat(500))));
+                    "x".repeat(500),
+                    false)));
 
     assertThat(message.subject())
         .doesNotContain("\r", "\n")
