@@ -1,9 +1,13 @@
 package dev.mfa.incident.mapper;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.mfa.incident.dto.ModelUsageDto;
 import dev.mfa.incident.dto.ReasonCode;
 import dev.mfa.incident.dto.StepDto;
 import dev.mfa.incident.dto.StepResultDto;
+import dev.mfa.incident.dto.TriageResult;
 import dev.mfa.incident.model.IncidentState;
 import dev.mfa.incident.model.IncidentStep;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -11,6 +15,25 @@ import java.util.UUID;
 
 @ApplicationScoped
 public class IncidentStepMapper {
+
+  private final ObjectMapper json;
+
+  public IncidentStepMapper(ObjectMapper objectMapper) {
+    this.json = objectMapper.copy().enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+  }
+
+  /**
+   * The typed output of a triage step, as the step stored it.
+   *
+   * @throws IllegalStateException if the stored output is not a triage result
+   */
+  public TriageResult toTriageResult(String output) {
+    try {
+      return json.readValue(output, TriageResult.class);
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException("Stored triage output is not a triage result", e);
+    }
+  }
 
   /**
    * @param reasonCode reason of the transition; {@code null} when the target state needs none

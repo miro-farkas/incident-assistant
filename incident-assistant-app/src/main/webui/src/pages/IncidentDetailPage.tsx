@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router";
 import { ApiError, getIncident } from "../api/client";
-import type { ApprovalDecision, IncidentDetail, Step } from "../api/types";
+import type { ApprovalDecision, IncidentDetail, Step, TriageResult } from "../api/types";
 import { isApprover, useCurrentUser } from "../auth/CurrentUser";
 import { DecisionPanel, type DecisionConflict } from "../components/DecisionPanel";
 import { JsonView } from "../components/JsonView";
@@ -157,7 +157,7 @@ export function IncidentDetailPage() {
         ) : (
           <ol className="steps">
             {(incident.steps ?? []).map((step) => (
-              <StepItem key={step.id} step={step} />
+              <StepItem key={step.id} step={step} triage={incident.triage} />
             ))}
           </ol>
         )}
@@ -239,7 +239,12 @@ function DecisionSection({ decision }: { decision: ApprovalDecision }) {
   );
 }
 
-function StepItem({ step }: { step: Step }) {
+/**
+ * One step of the history. A successful triage shows its typed result (A-0014); other steps show
+ * their output generically until their typed views exist (INC-007, INC-008).
+ */
+function StepItem({ step, triage }: { step: Step; triage: TriageResult | undefined }) {
+  const typedTriage = step.type === "TRIAGE" && step.status === "SUCCEEDED" ? triage : undefined;
   return (
     <li className="step">
       <h3>
@@ -279,12 +284,36 @@ function StepItem({ step }: { step: Step }) {
           </div>
         )}
         <div>
-          <dt>Output</dt>
+          <dt>{typedTriage ? "Triage" : "Output"}</dt>
           <dd>
-            <JsonView value={step.output} />
+            {typedTriage ? <TriageView triage={typedTriage} /> : <JsonView value={step.output} />}
           </dd>
         </div>
       </dl>
     </li>
+  );
+}
+
+/** The triage result as text; every field is model output (P-0019). */
+function TriageView({ triage }: { triage: TriageResult }) {
+  return (
+    <dl className="facts" data-testid="triage-result">
+      <div>
+        <dt>Severity</dt>
+        <dd>{text(triage.severity)}</dd>
+      </div>
+      <div>
+        <dt>Category</dt>
+        <dd>{text(triage.category)}</dd>
+      </div>
+      <div>
+        <dt>Affected service</dt>
+        <dd>{text(triage.affectedService)}</dd>
+      </div>
+      <div>
+        <dt>Summary</dt>
+        <dd>{text(triage.summary)}</dd>
+      </div>
+    </dl>
   );
 }

@@ -20,6 +20,14 @@ public final class IncidentFixtures {
             "service", service,
             "severity", severity,
             "summary", SUMMARY,
-            "description", "Error rate above 5% for 10 minutes"));
+            "description", "Error rate above 5% for 10 minutes"),
+        null);
+  }
+
+  /** The same incident after triage (A-0014), which judged it differently from the alert. */
+  public static IncidentDetailResponse triaged(String alertName, String service, String severity) {
+    return new IncidentDetailResponse(
+        detail(alertName, "reported-service", "warning").alert(),
+        new IncidentDetailResponse.Triage(severity, service));
   }
 }

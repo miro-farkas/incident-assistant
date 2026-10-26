@@ -13,6 +13,7 @@ export type ApprovalDecision = Schemas["ApprovalDecisionDto"];
 export type DecisionRequest = Schemas["DecisionDto"];
 export type Decision = Schemas["Decision"];
 export type CurrentUser = Schemas["CurrentUserDto"];
+export type TriageResult = Schemas["TriageResult"];
 
 /** Every state, in workflow order; the check below fails the build when the API adds one. */
 export const INCIDENT_STATES = [

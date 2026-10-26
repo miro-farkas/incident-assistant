@@ -227,6 +227,33 @@ How the UI is built:
 |---|---|---|---|
 | `quarkus.oidc.credentials.secret` | `OIDC_CLIENT_SECRET` | dev: local realm secret; prod: required | Secret of the confidential client `incident-assistant`, used to redeem the login code. Also derives the keys of the state and session cookies; use at least 32 characters, otherwise the state key is generated per instance and a login started on one instance fails on another. |
 
+### Workflow: step executor and triage
+
+A step executor on every instance claims incidents in a state that has a step (for now
+`RECEIVED`, triage), at most `max-concurrency` at a time, with a lease and `SKIP LOCKED`
+(P-0003, A-0014). Triage asks the model for severity, category, affected service and a
+summary; a valid answer moves the incident to `TRIAGED`, an answer still invalid after one
+reprompt or an unreachable model escalates it (`TRIAGE_INVALID_OUTPUT`, `TRIAGE_UNAVAILABLE`),
+and so does an exceeded token budget (`TOKEN_BUDGET_EXCEEDED`). Every step row records model,
+prompt id and version, tokens and duration. The incident detail returns the result as
+`triage`, and the UI shows it.
+
+Models: dev mode uses Ollama `qwen2.5:3b` from the compose Ollama, pulled on first start
+(about 1.9 GB). On a CPU a triage takes about 30 s with the model loaded and up to two minutes
+when Ollama must load it first. Prod uses Anthropic. Tests mock the AI service.
+
+| Property | Environment variable | Default | Description |
+|---|---|---|---|
+| `incident.workflow.executor.enabled` | `INCIDENT_WORKFLOW_EXECUTOR_ENABLED` | `true` (tests: `false`) | Run the step executor on this instance. |
+| `incident.workflow.executor.interval` | `INCIDENT_WORKFLOW_EXECUTOR_INTERVAL` | `2s` | Pause between runs that claim work. |
+| `incident.workflow.executor.max-concurrency` | `INCIDENT_WORKFLOW_EXECUTOR_MAX_CONCURRENCY` | `2` | Steps at the same time per instance; also the bulkhead of the model calls. |
+| `incident.workflow.executor.lease-duration` | `INCIDENT_WORKFLOW_EXECUTOR_LEASE_DURATION` | `5m` | Lease of a claimed incident; afterwards another instance may take it. |
+| `incident.workflow.token-budget` | `INCIDENT_WORKFLOW_TOKEN_BUDGET` | `20000` | Tokens all steps of one incident may use. |
+| `quarkus.langchain4j.anthropic.triage.api-key` | `ANTHROPIC_API_KEY` | prod: required | API key of the triage model. |
+| `quarkus.langchain4j.anthropic.triage.chat-model.model-name` | `ANTHROPIC_MODEL` | `claude-haiku-5-5` | Triage model in prod. |
+| `quarkus.langchain4j.ollama.triage.chat-model.model-id` | | `qwen2.5:3b` | Triage model in dev. |
+| `quarkus.fault-tolerance."dev.mfa.incident.ai.TriageAssistant$$QuarkusImpl/triage".timeout.value` | | `30` s (dev `120`) | Timeout of one triage call; one retry on timeouts and connection failures, then a circuit breaker. |
+
 ### Knowledge base
 
 Runbooks and postmortems in `knowledge/` (A-0004, A-0013, P-0021): Markdown with front matter

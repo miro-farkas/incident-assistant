@@ -71,10 +71,15 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-oidc</artifactId>
         </dependency>
-        <!-- Embedding model for the knowledge base (A-0013, P-0008) -->
+        <!-- Models: Ollama for embeddings everywhere and for chat in dev (A-0013, A-0014) -->
         <dependency>
             <groupId>io.quarkiverse.langchain4j</groupId>
             <artifactId>quarkus-langchain4j-ollama</artifactId>
+        </dependency>
+        <!-- Chat model of the AI steps in prod (A-0014, P-0008) -->
+        <dependency>
+            <groupId>io.quarkiverse.langchain4j</groupId>
+            <artifactId>quarkus-langchain4j-anthropic</artifactId>
         </dependency>
         <!-- pgvector columns in entities (P-0021) -->
         <dependency>
@@ -105,6 +110,12 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- AI services are mocked with @InjectMock in tests (P-0010) -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-junit-mockito</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

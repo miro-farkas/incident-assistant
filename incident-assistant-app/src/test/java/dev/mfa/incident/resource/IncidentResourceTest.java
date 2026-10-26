@@ -135,6 +135,10 @@ class IncidentResourceTest {
         .body("alert.value", equalTo(0.27f))
         .body("occurrenceCount", equalTo(0))
         .body("steps.type", equalTo(List.of("TRIAGE", "DIAGNOSIS", "PROPOSAL")))
+        .body("triage.severity", equalTo("HIGH"))
+        .body("triage.category", equalTo("DEPLOYMENT"))
+        .body("triage.affectedService", equalTo("checkout"))
+        .body("triage.summary", containsString("after a release"))
         .body("steps[2].fromState", equalTo("DIAGNOSED"))
         .body("steps[2].toState", equalTo("AWAITING_APPROVAL"))
         .body("steps[2].output.result", equalTo("ok"))
@@ -182,7 +186,8 @@ class IncidentResourceTest {
         .statusCode(200)
         .body("occurrenceCount", equalTo(1))
         .body("alert.fingerprint", equalTo(alert.fingerprint()))
-        .body("steps.size()", equalTo(0));
+        .body("steps.size()", equalTo(0))
+        .body("triage", nullValue());
   }
 
   @Test

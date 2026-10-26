@@ -46,7 +46,7 @@ class LayerRulesTest {
           .as("are JPA, Hibernate ORM or Panache classes");
 
   private static final DescribedPredicate<JavaClass> NON_ENUM_MODEL_CLASS =
-      resideInAPackage("..model..")
+      resideInAPackage("dev.mfa.incident.notification.model..")
           .and(DescribedPredicate.describe("not enums", (JavaClass c) -> !c.isEnum()))
           .as("model classes other than enums");
 
@@ -56,23 +56,23 @@ class LayerRulesTest {
           .consideringOnlyDependenciesInLayers()
           .withOptionalLayers(true)
           .layer("Messaging")
-          .definedBy("..messaging..")
+          .definedBy("dev.mfa.incident.notification.messaging..")
           .layer("Service")
-          .definedBy("..service..")
+          .definedBy("dev.mfa.incident.notification.service..")
           .layer("Client")
-          .definedBy("..client..")
+          .definedBy("dev.mfa.incident.notification.client..")
           .layer("Channel")
-          .definedBy("..channel..")
+          .definedBy("dev.mfa.incident.notification.channel..")
           .layer("Repository")
-          .definedBy("..repository..")
+          .definedBy("dev.mfa.incident.notification.repository..")
           .layer("Mapper")
-          .definedBy("..mapper..")
+          .definedBy("dev.mfa.incident.notification.mapper..")
           .layer("Dto")
-          .definedBy("..dto..")
+          .definedBy("dev.mfa.incident.notification.dto..")
           .layer("Config")
-          .definedBy("..config..")
+          .definedBy("dev.mfa.incident.notification.config..")
           .layer("Model")
-          .definedBy("..model..")
+          .definedBy("dev.mfa.incident.notification.model..")
           .whereLayer("Messaging")
           .mayNotBeAccessedByAnyLayer()
           .whereLayer("Service")
@@ -110,7 +110,7 @@ class LayerRulesTest {
 
   @ArchTest
   static final ArchRule entitiesLiveInModel =
-      classes().that(ENTITY).should().resideInAPackage("..model..");
+      classes().that(ENTITY).should().resideInAPackage("dev.mfa.incident.notification.model..");
 
   /** Besides accessors only the row identity of BaseEntity, which is final (P-0014). */
   @ArchTest

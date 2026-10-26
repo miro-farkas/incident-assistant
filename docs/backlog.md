@@ -195,7 +195,7 @@ Acceptance criteria
 - Admin endpoint protected by role `knowledge-admin`.
 - Retriever with service filter and minimum score; tests with a fake embedding model.
 
-## INC-006 Step executor and triage step — TODO
+## INC-006 Step executor and triage step — DONE
 Covers A-0001, P-0003, P-0007, P-0008.
 
 Acceptance criteria

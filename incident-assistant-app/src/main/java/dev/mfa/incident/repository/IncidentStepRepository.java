@@ -29,4 +29,15 @@ public class IncidentStepRepository implements PanacheRepositoryBase<IncidentSte
             stepType)
         .firstResultOptional();
   }
+
+  /** Input and output tokens of all steps of the incident; unknown counts as zero. */
+  public long sumTokens(UUID incidentId) {
+    return getEntityManager()
+        .createQuery(
+            "select coalesce(sum(coalesce(s.inputTokens, 0) + coalesce(s.outputTokens, 0)), 0)"
+                + " from IncidentStep s where s.incidentId = :incident",
+            Long.class)
+        .setParameter("incident", incidentId)
+        .getSingleResult();
+  }
 }

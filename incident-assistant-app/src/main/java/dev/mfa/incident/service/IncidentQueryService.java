@@ -5,6 +5,7 @@ import dev.mfa.incident.dto.IncidentDetailDto;
 import dev.mfa.incident.dto.IncidentPageDto;
 import dev.mfa.incident.dto.IncidentSummaryDto;
 import dev.mfa.incident.dto.StepDto;
+import dev.mfa.incident.dto.TriageResult;
 import dev.mfa.incident.exception.IncidentNotFoundException;
 import dev.mfa.incident.exception.UnknownIncidentStateException;
 import dev.mfa.incident.mapper.ApprovalDecisionMapper;
@@ -12,6 +13,8 @@ import dev.mfa.incident.mapper.IncidentMapper;
 import dev.mfa.incident.mapper.IncidentStepMapper;
 import dev.mfa.incident.model.Incident;
 import dev.mfa.incident.model.IncidentState;
+import dev.mfa.incident.model.StepStatus;
+import dev.mfa.incident.model.StepType;
 import dev.mfa.incident.repository.AlertOccurrenceRepository;
 import dev.mfa.incident.repository.ApprovalDecisionRepository;
 import dev.mfa.incident.repository.IncidentRepository;
@@ -103,7 +106,21 @@ public class IncidentQueryService {
     ApprovalDecisionDto decision =
         decisions.findLatestByIncident(incidentId).map(decisionMapper::toDto).orElse(null);
     return incidentMapper.toDetailDto(
-        incident, occurrences.countByIncident(incidentId), history, decision);
+        incident,
+        occurrences.countByIncident(incidentId),
+        history,
+        latestTriage(history),
+        decision);
+  }
+
+  /** Result of the last successful triage step (A-0014). */
+  private TriageResult latestTriage(List<StepDto> history) {
+    return history.reversed().stream()
+        .filter(s -> s.type() == StepType.TRIAGE && s.status() == StepStatus.SUCCEEDED)
+        .filter(s -> s.output() != null)
+        .findFirst()
+        .map(s -> stepMapper.toTriageResult(s.output()))
+        .orElse(null);
   }
 
   private static Set<IncidentState> parseStates(Collection<String> names) {

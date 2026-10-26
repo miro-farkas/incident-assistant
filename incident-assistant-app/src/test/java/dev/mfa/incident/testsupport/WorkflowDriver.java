@@ -35,6 +35,11 @@ public class WorkflowDriver {
     return advance(service.create(newIncident()), StepType.TRIAGE, IncidentState.TRIAGED);
   }
 
+  /** Records a successful triage for an incident in {@code RECEIVED}. */
+  public IncidentDto advanceToTriaged(IncidentDto received) {
+    return advance(received, StepType.TRIAGE, IncidentState.TRIAGED);
+  }
+
   private IncidentDto advance(IncidentDto incident, StepType step, IncidentState target) {
     return service.recordStep(incident.id(), incident.version(), succeeded(step), target, null);
   }

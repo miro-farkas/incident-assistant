@@ -23,7 +23,10 @@ import dev.mfa.incident.model.IncidentState;
 import jakarta.persistence.Entity;
 import jakarta.persistence.MappedSuperclass;
 
-/** Layering (P-0013), entity/DTO rules (P-0014) and data access (P-0015) for production code. */
+/**
+ * Layering (P-0013 with the {@code ai} package of A-0014), entity/DTO rules (P-0014) and data
+ * access (P-0015) for production code.
+ */
 @AnalyzeClasses(packages = "dev.mfa.incident", importOptions = ImportOption.DoNotIncludeTests.class)
 class LayerRulesTest {
 
@@ -43,7 +46,7 @@ class LayerRulesTest {
           .as("are JPA, Hibernate ORM or Panache classes");
 
   private static final DescribedPredicate<JavaClass> NON_ENUM_MODEL_CLASS =
-      resideInAPackage("..model..")
+      resideInAPackage("dev.mfa.incident.model..")
           .and(DescribedPredicate.describe("not enums", (JavaClass c) -> !c.isEnum()))
           .as("model classes other than enums");
 
@@ -53,31 +56,35 @@ class LayerRulesTest {
           .consideringOnlyDependenciesInLayers()
           .withOptionalLayers(true)
           .layer("Resource")
-          .definedBy("..resource..")
+          .definedBy("dev.mfa.incident.resource..")
           .layer("Messaging")
-          .definedBy("..messaging..")
+          .definedBy("dev.mfa.incident.messaging..")
           .layer("Health")
-          .definedBy("..health..")
+          .definedBy("dev.mfa.incident.health..")
+          .layer("Ai")
+          .definedBy("dev.mfa.incident.ai..")
           .layer("Service")
-          .definedBy("..service..")
+          .definedBy("dev.mfa.incident.service..")
           .layer("Repository")
-          .definedBy("..repository..")
+          .definedBy("dev.mfa.incident.repository..")
           .layer("Mapper")
-          .definedBy("..mapper..")
+          .definedBy("dev.mfa.incident.mapper..")
           .layer("Dto")
-          .definedBy("..dto..")
+          .definedBy("dev.mfa.incident.dto..")
           .layer("Exception")
-          .definedBy("..exception..")
+          .definedBy("dev.mfa.incident.exception..")
           .layer("Config")
-          .definedBy("..config..")
+          .definedBy("dev.mfa.incident.config..")
           .layer("Model")
-          .definedBy("..model..")
+          .definedBy("dev.mfa.incident.model..")
           .whereLayer("Resource")
           .mayNotBeAccessedByAnyLayer()
           .whereLayer("Messaging")
           .mayNotBeAccessedByAnyLayer()
           .whereLayer("Health")
           .mayNotBeAccessedByAnyLayer()
+          .whereLayer("Ai")
+          .mayOnlyBeAccessedByLayers("Service")
           .whereLayer("Service")
           .mayOnlyBeAccessedByLayers("Resource", "Messaging", "Health")
           .whereLayer("Repository")
@@ -85,11 +92,11 @@ class LayerRulesTest {
           .whereLayer("Mapper")
           .mayOnlyBeAccessedByLayers("Service")
           .whereLayer("Dto")
-          .mayOnlyBeAccessedByLayers("Resource", "Messaging", "Health", "Service", "Mapper")
+          .mayOnlyBeAccessedByLayers("Resource", "Messaging", "Health", "Ai", "Service", "Mapper")
           .whereLayer("Exception")
           .mayOnlyBeAccessedByLayers("Resource", "Messaging", "Service", "Repository")
           .whereLayer("Config")
-          .mayOnlyBeAccessedByLayers("Resource", "Messaging", "Health", "Service")
+          .mayOnlyBeAccessedByLayers("Resource", "Messaging", "Health", "Ai", "Service")
           .whereLayer("Model")
           .mayOnlyBeAccessedByLayers("Service", "Repository", "Mapper", "Dto", "Exception");
 
@@ -111,7 +118,7 @@ class LayerRulesTest {
 
   @ArchTest
   static final ArchRule entitiesLiveInModel =
-      classes().that(ENTITY).should().resideInAPackage("..model..");
+      classes().that(ENTITY).should().resideInAPackage("dev.mfa.incident.model..");
 
   /** Besides accessors only the row identity of BaseEntity, which is final (P-0014). */
   @ArchTest

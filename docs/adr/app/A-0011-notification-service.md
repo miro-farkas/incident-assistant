@@ -47,9 +47,9 @@ workflow escalated an incident. Incident state changes arrive on
 - Packages (P-0013, decided with INC-016): `client` holds the REST client of the incident API
   and its response record, `channel` the `NotificationChannel` interface and `EmailChannel`.
   Both are used only by `service`; the ArchUnit layer rules of the module include them.
-- Service and severity: until the typed triage result exists (INC-006), messages show the
-  service and severity the alert reported (`alert.service`, `alert.severity` of the detail),
-  marked "as reported by the alert"; INC-006 switches them to the triaged values. Alert values
+- Service and severity: from the triage result of the detail (`triage.affectedService`,
+  `triage.severity`, A-0014), marked "triaged"; before an incident is triaged, the ones the
+  alert reported (`alert.service`, `alert.severity`), marked "as reported by the alert". Alert values
   are untrusted: control characters are replaced, values are cut at 100 characters, the HTML
   template escapes them. A missing value, and every value of the minimal message, is
   `unknown`.

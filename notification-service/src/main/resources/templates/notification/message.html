@@ -13,8 +13,8 @@
     <tr><td>Time</td><td>{occurredAt}</td></tr>
     {#if detailsAvailable}
     <tr><td>Alert</td><td>{alertName}</td></tr>
-    <tr><td>Service</td><td>{service} (as reported by the alert)</td></tr>
-    <tr><td>Severity</td><td>{severity} (as reported by the alert)</td></tr>
+    <tr><td>Service</td><td>{service} ({assessment})</td></tr>
+    <tr><td>Severity</td><td>{severity} ({assessment})</td></tr>
     {/if}
   </table>
   {#if !detailsAvailable}<p>Details are not available right now; open the incident for them.</p>{/if}
