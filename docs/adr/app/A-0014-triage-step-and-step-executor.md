@@ -1,6 +1,6 @@
 # A-0014: Triage step and step executor
 
-- Status: Accepted
+- Status: Accepted (amended with A-0015: no chat memory, guardrail retry count)
 - Date: 2026-10-25
 - Applies: P-0001, P-0003, P-0007, P-0008, P-0013
 
@@ -45,7 +45,7 @@ concrete values; the development PC has about 4 GB of free memory and no GPU.
   data.
 - **Output guardrail**: the schema rules above, and if the alert reported a service, the
   triaged service must be that service (case-insensitive). One reprompt with the violation
-  (`quarkus.langchain4j.guardrails.max-retries=1`).
+  (`quarkus.langchain4j.guardrails.max-retries=2`, which counts the first answer).
 - **Fault tolerance** on the triage call: timeout as above, one retry on timeout or
   connection failure only, bulkhead of `max-concurrency`, circuit breaker (8 calls, 50 %
   failures, 60 s open).
@@ -85,7 +85,7 @@ concrete values; the development PC has about 4 GB of free memory and no GPU.
   (`dev.mfa.incident.ai.TriageAssistant$$QuarkusImpl/triage`): SmallRye reads them from the class
   that declares the method and silently ignores the interface name. `TriageFaultToleranceTest`
   checks that the configured bulkhead and timeout take effect.
-- The model clients of the `triage` model do not retry (`TriageModelCustomizers`, both
+- The model clients of the `triage` model do not retry (`ModelClientCustomizers`, both
   providers): langchain4j's own retry also retried a call the fault-tolerance timeout had
   interrupted. Fault tolerance is the only retry (P-0008).
 - Measured in dev mode on the maintainer's CPU-only PC (`qwen2.5:3b`, one alert): 110.6 s,

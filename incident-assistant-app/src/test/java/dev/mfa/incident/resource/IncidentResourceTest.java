@@ -139,6 +139,10 @@ class IncidentResourceTest {
         .body("triage.category", equalTo("DEPLOYMENT"))
         .body("triage.affectedService", equalTo("checkout"))
         .body("triage.summary", containsString("after a release"))
+        .body("diagnosis.hypothesis", containsString("broke the payment call"))
+        .body("diagnosis.confidence", equalTo("HIGH"))
+        .body("diagnosis.evidence[0].sourceType", equalTo("TOOL"))
+        .body("diagnosis.evidence[0].source", equalTo("get_recent_deployments"))
         .body("steps[2].fromState", equalTo("DIAGNOSED"))
         .body("steps[2].toState", equalTo("AWAITING_APPROVAL"))
         .body("steps[2].output.result", equalTo("ok"))
@@ -187,7 +191,8 @@ class IncidentResourceTest {
         .body("occurrenceCount", equalTo(1))
         .body("alert.fingerprint", equalTo(alert.fingerprint()))
         .body("steps.size()", equalTo(0))
-        .body("triage", nullValue());
+        .body("triage", nullValue())
+        .body("diagnosis", nullValue());
   }
 
   @Test

@@ -227,10 +227,10 @@ How the UI is built:
 |---|---|---|---|
 | `quarkus.oidc.credentials.secret` | `OIDC_CLIENT_SECRET` | dev: local realm secret; prod: required | Secret of the confidential client `incident-assistant`, used to redeem the login code. Also derives the keys of the state and session cookies; use at least 32 characters, otherwise the state key is generated per instance and a login started on one instance fails on another. |
 
-### Workflow: step executor and triage
+### Workflow: step executor, triage and diagnosis
 
 A step executor on every instance claims incidents in a state that has a step (for now
-`RECEIVED`, triage), at most `max-concurrency` at a time, with a lease and `SKIP LOCKED`
+`RECEIVED`, triage, and `TRIAGED`, diagnosis), at most `max-concurrency` at a time, with a lease and `SKIP LOCKED`
 (P-0003, A-0014). Triage asks the model for severity, category, affected service and a
 summary; a valid answer moves the incident to `TRIAGED`, an answer still invalid after one
 reprompt or an unreachable model escalates it (`TRIAGE_INVALID_OUTPUT`, `TRIAGE_UNAVAILABLE`),
@@ -238,9 +238,27 @@ and so does an exceeded token budget (`TOKEN_BUDGET_EXCEEDED`). Every step row r
 prompt id and version, tokens and duration. The incident detail returns the result as
 `triage`, and the UI shows it.
 
-Models: dev mode uses Ollama `qwen2.5:3b` from the compose Ollama, pulled on first start
-(about 1.9 GB). On a CPU a triage takes about 30 s with the model loaded and up to two minutes
-when Ollama must load it first. Prod uses Anthropic. Tests mock the AI service.
+Diagnosis (A-0015) lets an agent call the read tools of `ops-tools-mcp` (`/mcp/read`, only
+`get_service_metrics`, `search_logs`, `get_recent_deployments`, `get_service_health`) and
+`search_knowledge` (the knowledge base, filtered by the triaged service), at most
+`max-tool-calls` times. It answers with a hypothesis, a confidence and evidence that cites
+the documents and tools it used. A valid diagnosis moves the incident to `DIAGNOSED`; an
+answer still invalid after one reprompt, a call beyond the tool budget, a timeout or an
+unreachable model or tool server escalates it (`DIAGNOSIS_INVALID_OUTPUT`,
+`DIAGNOSIS_TOOL_BUDGET_EXCEEDED`, `DIAGNOSIS_TIMEOUT`, `DIAGNOSIS_UNAVAILABLE`). The step row
+also stores the trace of the tool calls (`tool_calls`: tool, arguments, outcome, duration,
+result length, document titles; no results). The incident detail returns the result as
+`diagnosis`, and the UI shows it.
+
+Models: dev mode uses Ollama `qwen2.5:3b` from the compose Ollama for both steps, pulled on
+first start (about 1.9 GB). On a CPU a triage takes about 30 s with the model loaded and up to
+two minutes when Ollama must load it first; a diagnosis takes several minutes and may escalate,
+because a 3B model is weak at multi-step tool use. Dev mode logs the requests to and responses
+of both models, prompts included. Prod uses Anthropic. Tests mock the AI services, and the
+agent-loop test uses a scripted model and a fake MCP client.
+
+Diagnoses in dev mode need `ops-tools-mcp` running (`./mvnw quarkus:dev -pl ops-tools-mcp`);
+without it they escalate with `DIAGNOSIS_UNAVAILABLE`.
 
 | Property | Environment variable | Default | Description |
 |---|---|---|---|
@@ -248,11 +266,16 @@ when Ollama must load it first. Prod uses Anthropic. Tests mock the AI service.
 | `incident.workflow.executor.interval` | `INCIDENT_WORKFLOW_EXECUTOR_INTERVAL` | `2s` | Pause between runs that claim work. |
 | `incident.workflow.executor.max-concurrency` | `INCIDENT_WORKFLOW_EXECUTOR_MAX_CONCURRENCY` | `2` | Steps at the same time per instance; also the bulkhead of the model calls. |
 | `incident.workflow.executor.lease-duration` | `INCIDENT_WORKFLOW_EXECUTOR_LEASE_DURATION` | `5m` | Lease of a claimed incident; afterwards another instance may take it. |
-| `incident.workflow.token-budget` | `INCIDENT_WORKFLOW_TOKEN_BUDGET` | `20000` | Tokens all steps of one incident may use. |
-| `quarkus.langchain4j.anthropic.triage.api-key` | `ANTHROPIC_API_KEY` | prod: required | API key of the triage model. |
+| `incident.workflow.token-budget` | `INCIDENT_WORKFLOW_TOKEN_BUDGET` | `60000` | Tokens all steps of one incident may use; tool results are sent again on every round trip of the diagnosis. |
+| `incident.workflow.diagnosis.max-tool-calls` | `INCIDENT_WORKFLOW_DIAGNOSIS_MAX_TOOL_CALLS` | `6` | Tool calls one diagnosis may make, 1 to 20. |
+| `quarkus.langchain4j.mcp.ops-read.url` | `OPS_TOOLS_MCP_READ_URL` | dev: `http://localhost:8081/mcp/read`; prod: required | Read endpoint of `ops-tools-mcp`; each tool call times out after 10 s. |
+| `quarkus.langchain4j.anthropic.triage.api-key` | `ANTHROPIC_API_KEY` | prod: required | API key of the triage and diagnosis models. |
 | `quarkus.langchain4j.anthropic.triage.chat-model.model-name` | `ANTHROPIC_MODEL` | `claude-haiku-5-5` | Triage model in prod. |
 | `quarkus.langchain4j.ollama.triage.chat-model.model-id` | | `qwen2.5:3b` | Triage model in dev. |
 | `quarkus.fault-tolerance."dev.mfa.incident.ai.TriageAssistant$$QuarkusImpl/triage".timeout.value` | | `30` s (dev `120`) | Timeout of one triage call; one retry on timeouts and connection failures, then a circuit breaker. |
+| `quarkus.langchain4j.anthropic.diagnosis.chat-model.model-name` | `ANTHROPIC_DIAGNOSIS_MODEL` | `claude-sonnet-5-5` | Diagnosis model in prod. |
+| `quarkus.langchain4j.ollama.diagnosis.chat-model.model-id` | | `qwen2.5:3b` | Diagnosis model in dev. |
+| `quarkus.fault-tolerance."dev.mfa.incident.ai.DiagnosisAgent$$QuarkusImpl/diagnose".timeout.value` | | `120` s (dev `270`) | Timeout of one whole diagnosis, all round trips and tool calls; no retry, then a circuit breaker. Must stay below the lease duration. |
 
 ### Knowledge base
 
@@ -440,6 +463,7 @@ INCIDENT_INSTANCE_ID=incident-assistant-1 \
   QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://localhost:5432/incident \
   QUARKUS_DATASOURCE_USERNAME=incident QUARKUS_DATASOURCE_PASSWORD=incident \
   KAFKA_BOOTSTRAP_SERVERS=localhost:9092 \
+  OPS_TOOLS_MCP_READ_URL=http://localhost:8081/mcp/read \
   java -jar incident-assistant-app/target/quarkus-app/quarkus-run.jar
 OPS_ACTIONS_API_KEY=<at least 32 characters> QUARKUS_HTTP_PORT=8081 \
   java -jar ops-tools-mcp/target/quarkus-app/quarkus-run.jar

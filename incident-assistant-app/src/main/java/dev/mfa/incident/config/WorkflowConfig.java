@@ -8,12 +8,15 @@ import jakarta.validation.constraints.NotBlank;
 import java.time.Duration;
 import org.hibernate.validator.constraints.time.DurationMin;
 
-/** The step executor and the limits of one workflow (P-0003, P-0008, A-0014). */
+/** The step executor and the limits of one workflow (P-0003, P-0008, A-0014, A-0015). */
 @ConfigMapping(prefix = "incident.workflow")
 public interface WorkflowConfig {
 
-  /** Tokens all steps of one incident may use together; above it the incident is escalated. */
-  @WithDefault("20000")
+  /**
+   * Tokens all steps of one incident may use together; above it the incident is escalated. Tool
+   * results are sent back to the model on every round trip of the diagnosis, hence the size.
+   */
+  @WithDefault("60000")
   @Min(1)
   long tokenBudget();
 
@@ -24,7 +27,25 @@ public interface WorkflowConfig {
   @NotBlank
   String triageModel();
 
+  /** Provider and model of the diagnosis step, recorded like {@link #triageModel()}. */
+  @NotBlank
+  String diagnosisModel();
+
+  Diagnosis diagnosis();
+
   Executor executor();
+
+  interface Diagnosis {
+
+    /**
+     * Tool calls one diagnosis may make, across all tools; one more escalates the incident. The
+     * prompt tells the model the number.
+     */
+    @WithDefault("6")
+    @Min(1)
+    @Max(20)
+    int maxToolCalls();
+  }
 
   interface Executor {
 

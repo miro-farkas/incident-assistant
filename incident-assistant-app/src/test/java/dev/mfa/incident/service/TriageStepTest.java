@@ -4,6 +4,7 @@ import static dev.mfa.incident.testsupport.WorkflowFixtures.alert;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -15,6 +16,7 @@ import dev.langchain4j.guardrail.OutputGuardrailException;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.output.TokenUsage;
 import dev.langchain4j.service.Result;
+import dev.mfa.incident.ai.DiagnosisAgent;
 import dev.mfa.incident.ai.TriageAssistant;
 import dev.mfa.incident.dto.AlertMessage;
 import dev.mfa.incident.dto.TriageResult;
@@ -32,11 +34,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.eclipse.microprofile.faulttolerance.exceptions.TimeoutException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
  * The executor claims new incidents and the triage step records one outcome each (A-0014), with a
- * mocked {@link TriageAssistant} (P-0010).
+ * mocked {@link TriageAssistant} (P-0010). The executor goes on with the diagnosis of a triaged
+ * incident; its agent fails here, so the tests wait for the triage step rather than the state.
  */
 @QuarkusTest
 @TestProfile(ExecutorProfile.class)
@@ -52,11 +56,19 @@ class TriageStepTest {
           "Checkout fails for many customers since the last release.");
 
   @InjectMock TriageAssistant assistant;
+  @InjectMock DiagnosisAgent diagnosis;
 
   @Inject AlertIngestionService ingestion;
   @Inject IncidentService incidents;
   @Inject WorkflowTables tables;
   @Inject ObjectMapper json;
+
+  @BeforeEach
+  void diagnosisIsNotUnderTest() {
+    when(diagnosis.diagnose(
+            anyInt(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        .thenThrow(new IllegalStateException("not under test"));
+  }
 
   @Test
   void validTriageMovesTheIncidentToTriagedAndRecordsTheModelCall() throws Exception {
@@ -66,7 +78,7 @@ class TriageStepTest {
 
     UUID id = ingestion.ingest(alert).incidentId();
 
-    awaitState(id, IncidentState.TRIAGED);
+    awaitTriaged(id);
     StepRow step = tables.steps(id).getFirst();
     assertThat(step.stepType()).isEqualTo("TRIAGE");
     assertThat(step.status()).isEqualTo("SUCCEEDED");
@@ -82,7 +94,6 @@ class TriageStepTest {
     assertThat(input.has("generatorUrl"))
         .as("only the fields of A-0014 reach the prompt")
         .isFalse();
-    assertThat(tables.lease(id).owner()).as("lease released").isNull();
     verify(assistant)
         .triage(
             eq("HighErrorRate"),
@@ -92,6 +103,9 @@ class TriageStepTest {
             eq(alert.summary()),
             eq(alert.description()),
             any());
+    // The diagnosis claims the incident next and fails; every recorded step releases the lease.
+    awaitState(id, IncidentState.ESCALATED);
+    assertThat(tables.lease(id).owner()).as("lease released").isNull();
   }
 
   @Test
@@ -134,7 +148,7 @@ class TriageStepTest {
   void exceedingTheTokenBudgetEscalates() {
     AlertMessage alert = alert();
     when(assistant.triage(eq(alert.alertName()), any(), any(), any(), any(), any(), any()))
-        .thenReturn(answer(RESULT, 19_000, 1_500));
+        .thenReturn(answer(RESULT, 55_000, 6_000));
 
     UUID id = ingestion.ingest(alert).incidentId();
 
@@ -169,7 +183,7 @@ class TriageStepTest {
     release.countDown();
 
     for (UUID id : ids) {
-      awaitState(id, IncidentState.TRIAGED);
+      awaitTriaged(id);
     }
     assertThat(mostRunning.get()).isEqualTo(2);
   }
@@ -188,6 +202,19 @@ class TriageStepTest {
         alert.description(),
         alert.labels(),
         alert.generatorUrl());
+  }
+
+  /** Waits for a triage step that moved the incident to {@code TRIAGED}. */
+  private void awaitTriaged(UUID id) {
+    await()
+        .atMost(TIMEOUT)
+        .until(
+            () ->
+                tables.steps(id).stream()
+                    .anyMatch(
+                        step ->
+                            step.stepType().equals("TRIAGE")
+                                && step.toState().equals(IncidentState.TRIAGED.name())));
   }
 
   private void awaitState(UUID id, IncidentState state) {

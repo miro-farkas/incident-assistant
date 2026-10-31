@@ -19,14 +19,19 @@ import org.eclipse.microprofile.faulttolerance.exceptions.TimeoutException;
  * Triage of one alert (A-0014): severity, category, affected service and summary. Named model
  * {@code triage}; prompts in {@code prompts/triage/}. Stateless: no memory between incidents, and
  * therefore application-scoped, because the step executor calls it from its own threads, where no
- * request context is active (the default scope of an AI service is the request).
+ * request context is active (the default scope of an AI service is the request). Without chat
+ * memory: outside a request every call would share the memory id {@code default}, so one incident's
+ * conversation would reach the next (A-0015). Without tools, also when a tool provider bean exists.
  *
  * <p>Fault tolerance (P-0008, values in {@code application.properties}): a timeout, one retry on
  * timeouts and connection failures ({@code ProcessingException} of the model client) only, a
  * bulkhead of the executor's concurrency and a circuit breaker. The output guardrail allows one
  * reprompt.
  */
-@RegisterAiService(modelName = "triage")
+@RegisterAiService(
+    modelName = "triage",
+    chatMemoryProviderSupplier = RegisterAiService.NoChatMemoryProviderSupplier.class,
+    toolProviderSupplier = RegisterAiService.NoToolProviderSupplier.class)
 @ApplicationScoped
 public interface TriageAssistant {
 
