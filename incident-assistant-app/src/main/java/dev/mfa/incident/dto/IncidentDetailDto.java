@@ -15,6 +15,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
  * @param occurrenceCount repeated alerts received while the incident was open (A-0003)
  * @param steps executed steps in the order they ran
  * @param triage result of the latest successful triage step (A-0014); {@code null} before one
+ * @param diagnosis result of the latest successful diagnosis step (A-0015); {@code null} before one
  * @param decision the approval decision; {@code null} until one is made
  */
 public record IncidentDetailDto(
@@ -31,4 +32,5 @@ public record IncidentDetailDto(
     long occurrenceCount,
     List<StepDto> steps,
     TriageResult triage,
+    Diagnosis diagnosis,
     ApprovalDecisionDto decision) {}

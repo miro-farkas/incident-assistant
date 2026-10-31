@@ -76,6 +76,10 @@ public class IncidentStep extends BaseEntity {
   @Column(name = "error_message", length = 2000)
   private String errorMessage;
 
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "tool_calls")
+  private String toolCalls;
+
   public UUID getIncidentId() {
     return incidentId;
   }
@@ -210,5 +214,13 @@ public class IncidentStep extends BaseEntity {
 
   public void setErrorMessage(String errorMessage) {
     this.errorMessage = errorMessage;
+  }
+
+  public String getToolCalls() {
+    return toolCalls;
+  }
+
+  public void setToolCalls(String toolCalls) {
+    this.toolCalls = toolCalls;
   }
 }

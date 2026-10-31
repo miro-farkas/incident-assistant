@@ -209,7 +209,7 @@ Acceptance criteria
 - Incident detail API returns the typed `TriageResult`; the UI shows severity, category,
   affected service and summary (as text) instead of the generic step view.
 
-## INC-007 Diagnosis step (bounded autonomous agent) — TODO
+## INC-007 Diagnosis step (bounded autonomous agent) — DONE
 Covers A-0001, A-0004, A-0005, P-0006.
 
 Acceptance criteria

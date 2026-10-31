@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router";
 import { ApiError, getIncident } from "../api/client";
-import type { ApprovalDecision, IncidentDetail, Step, TriageResult } from "../api/types";
+import type {
+  ApprovalDecision,
+  Diagnosis,
+  Evidence,
+  IncidentDetail,
+  Step,
+  TriageResult,
+} from "../api/types";
 import { isApprover, useCurrentUser } from "../auth/CurrentUser";
 import { DecisionPanel, type DecisionConflict } from "../components/DecisionPanel";
 import { JsonView } from "../components/JsonView";
@@ -157,7 +164,12 @@ export function IncidentDetailPage() {
         ) : (
           <ol className="steps">
             {(incident.steps ?? []).map((step) => (
-              <StepItem key={step.id} step={step} triage={incident.triage} />
+              <StepItem
+                key={step.id}
+                step={step}
+                triage={incident.triage}
+                diagnosis={incident.diagnosis}
+              />
             ))}
           </ol>
         )}
@@ -240,11 +252,21 @@ function DecisionSection({ decision }: { decision: ApprovalDecision }) {
 }
 
 /**
- * One step of the history. A successful triage shows its typed result (A-0014); other steps show
- * their output generically until their typed views exist (INC-007, INC-008).
+ * One step of the history. A successful triage or diagnosis shows its typed result (A-0014,
+ * A-0015); other steps show their output generically until their typed views exist (INC-008).
  */
-function StepItem({ step, triage }: { step: Step; triage: TriageResult | undefined }) {
-  const typedTriage = step.type === "TRIAGE" && step.status === "SUCCEEDED" ? triage : undefined;
+function StepItem({
+  step,
+  triage,
+  diagnosis,
+}: {
+  step: Step;
+  triage: TriageResult | undefined;
+  diagnosis: Diagnosis | undefined;
+}) {
+  const succeeded = step.status === "SUCCEEDED";
+  const typedTriage = step.type === "TRIAGE" && succeeded ? triage : undefined;
+  const typedDiagnosis = step.type === "DIAGNOSIS" && succeeded ? diagnosis : undefined;
   return (
     <li className="step">
       <h3>
@@ -284,9 +306,15 @@ function StepItem({ step, triage }: { step: Step; triage: TriageResult | undefin
           </div>
         )}
         <div>
-          <dt>{typedTriage ? "Triage" : "Output"}</dt>
+          <dt>{typedTriage ? "Triage" : typedDiagnosis ? "Diagnosis" : "Output"}</dt>
           <dd>
-            {typedTriage ? <TriageView triage={typedTriage} /> : <JsonView value={step.output} />}
+            {typedTriage ? (
+              <TriageView triage={typedTriage} />
+            ) : typedDiagnosis ? (
+              <DiagnosisView diagnosis={typedDiagnosis} />
+            ) : (
+              <JsonView value={step.output} />
+            )}
           </dd>
         </div>
       </dl>
@@ -313,6 +341,37 @@ function TriageView({ triage }: { triage: TriageResult }) {
       <div>
         <dt>Summary</dt>
         <dd>{text(triage.summary)}</dd>
+      </div>
+    </dl>
+  );
+}
+
+/** The diagnosis as text; every field, sources included, is model output (P-0019). */
+function DiagnosisView({ diagnosis }: { diagnosis: Diagnosis }) {
+  return (
+    <dl className="facts" data-testid="diagnosis-result">
+      <div>
+        <dt>Hypothesis</dt>
+        <dd>{text(diagnosis.hypothesis)}</dd>
+      </div>
+      <div>
+        <dt>Confidence</dt>
+        <dd>{text(diagnosis.confidence)}</dd>
+      </div>
+      <div>
+        <dt>Evidence</dt>
+        <dd>
+          <ul className="evidence">
+            {(diagnosis.evidence ?? []).map((evidence: Evidence, index) => (
+              <li key={index}>
+                {text(evidence.statement)}{" "}
+                <span className="source">
+                  ({text(evidence.sourceType)}: {text(evidence.source)})
+                </span>
+              </li>
+            ))}
+          </ul>
+        </dd>
       </div>
     </dl>
   );

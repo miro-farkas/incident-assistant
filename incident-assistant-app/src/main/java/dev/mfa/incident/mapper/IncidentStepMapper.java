@@ -3,6 +3,7 @@ package dev.mfa.incident.mapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.mfa.incident.dto.Diagnosis;
 import dev.mfa.incident.dto.ModelUsageDto;
 import dev.mfa.incident.dto.ReasonCode;
 import dev.mfa.incident.dto.StepDto;
@@ -36,6 +37,19 @@ public class IncidentStepMapper {
   }
 
   /**
+   * The typed output of a diagnosis step, as the step stored it.
+   *
+   * @throws IllegalStateException if the stored output is not a diagnosis
+   */
+  public Diagnosis toDiagnosis(String output) {
+    try {
+      return json.readValue(output, Diagnosis.class);
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException("Stored diagnosis output is not a diagnosis", e);
+    }
+  }
+
+  /**
    * @param reasonCode reason of the transition; {@code null} when the target state needs none
    */
   public IncidentStep toEntity(
@@ -65,6 +79,9 @@ public class IncidentStepMapper {
     step.setDurationMs(result.duration().toMillis());
     step.setReasonCode(reasonCode == null ? null : reasonCode.value());
     step.setErrorMessage(result.errorMessage());
+    if (result.toolCalls() != null) {
+      step.setToolCalls(toJson(result.toolCalls()));
+    }
     return step;
   }
 
@@ -86,5 +103,13 @@ public class IncidentStepMapper {
         step.getInputTokens(),
         step.getOutputTokens(),
         step.getOutput());
+  }
+
+  private String toJson(Object value) {
+    try {
+      return json.writeValueAsString(value);
+    } catch (JsonProcessingException e) {
+      throw new IllegalStateException("Step data not serialisable", e);
+    }
   }
 }

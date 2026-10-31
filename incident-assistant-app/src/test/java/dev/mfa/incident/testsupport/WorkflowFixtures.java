@@ -59,12 +59,23 @@ public final class WorkflowFixtures {
       "{\"severity\": \"HIGH\", \"category\": \"DEPLOYMENT\", \"affectedService\":"
           + " \"checkout\", \"summary\": \"Error rate of checkout rose after a release.\"}";
 
+  /** Output of a successful diagnosis step (A-0015). */
+  public static final String DIAGNOSIS_OUTPUT =
+      "{\"hypothesis\": \"Release 2026.10.18-1 of checkout broke the payment call.\","
+          + " \"confidence\": \"HIGH\", \"evidence\": [{\"statement\": \"Errors started with"
+          + " the deployment.\", \"sourceType\": \"TOOL\", \"source\":"
+          + " \"get_recent_deployments\"}]}";
+
   public static StepResultDto succeeded(StepType type) {
     return new StepResultDto(
         type,
         StepStatus.SUCCEEDED,
         "{\"step\": \"" + type + "\"}",
-        type == StepType.TRIAGE ? TRIAGE_OUTPUT : "{\"result\": \"ok\"}",
+        switch (type) {
+          case TRIAGE -> TRIAGE_OUTPUT;
+          case DIAGNOSIS -> DIAGNOSIS_OUTPUT;
+          default -> "{\"result\": \"ok\"}";
+        },
         MODEL_USAGE,
         STARTED_AT,
         FINISHED_AT,

@@ -32,10 +32,17 @@ input values are passed as `null` and printed with `{name ?: 'not reported'}`.
 - Output is always a Java record with Bean Validation annotations; enums for closed sets.
   Use `@Description` on fields where it improves extraction.
 - Every AI service has an output guardrail validating business rules beyond the schema
-  and allowing one reprompt.
+  and allowing one reprompt (`quarkus.langchain4j.guardrails.max-retries=2`: langchain4j
+  counts the first answer). On success it returns `successWith(AiMessage)` with the cleaned
+  text, not a parsed object: for a `Result<T>` return type the service parses that message.
 - Model selection via named model config (`modelName`), never hard-coded model ids.
-- No memory between incidents: AI services are request-scoped/stateless; any chat memory
-  is keyed by incident id and discarded after the step.
+- No memory between calls (A-0015): AI services are `@ApplicationScoped` (the executor's
+  threads have no request context) with
+  `chatMemoryProviderSupplier = RegisterAiService.NoChatMemoryProviderSupplier.class`;
+  the tool loop and the reprompt keep their messages for one call only.
+- Every AI service names its tool provider: `NoToolProviderSupplier` without tools, or a
+  `Supplier<ToolProvider>` class. Never declare a `ToolProvider` bean; it would be attached
+  to every AI service.
 - Tools for the LLM: only read-only, explicitly allowlisted per AI service. Never expose
   an action tool to an AI service.
 - Record per call: model id, prompt id + version, token usage, duration → step row and

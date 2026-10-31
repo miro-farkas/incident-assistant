@@ -1,5 +1,6 @@
 package dev.mfa.incident.service;
 
+import dev.mfa.incident.ai.KnowledgeSearch;
 import dev.mfa.incident.config.KnowledgeConfig;
 import dev.mfa.incident.dto.RetrievedSegmentDto;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -7,11 +8,11 @@ import java.util.List;
 
 /**
  * Searches the knowledge base (P-0005, A-0013): the segments most similar to a query, best first,
- * with their document's title and path for citation. The diagnosis step uses it as a tool
- * (INC-007).
+ * with their document's title and path for citation. The diagnosis agent uses it as a tool
+ * (A-0015).
  */
 @ApplicationScoped
-public class KnowledgeRetriever {
+public class KnowledgeRetriever implements KnowledgeSearch {
 
   private final KnowledgeEmbedder embedder;
   private final KnowledgeStore store;
@@ -25,6 +26,7 @@ public class KnowledgeRetriever {
   }
 
   /** With the configured limit and minimum score. */
+  @Override
   public List<RetrievedSegmentDto> search(String query, String service) {
     return search(query, service, config.retrieval().limit(), config.retrieval().minScore());
   }
