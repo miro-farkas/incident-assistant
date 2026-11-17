@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -109,18 +110,30 @@ public class IncidentQueryService {
         incident,
         occurrences.countByIncident(incidentId),
         history,
-        latestTriage(history),
+        latestSucceeded(history, StepType.TRIAGE).map(stepMapper::toTriageResult).orElse(null),
+        latestSucceeded(history, StepType.DIAGNOSIS).map(stepMapper::toDiagnosis).orElse(null),
         decision);
   }
 
-  /** Result of the last successful triage step (A-0014). */
-  private TriageResult latestTriage(List<StepDto> history) {
+  /**
+   * The triage result the incident's diagnosis builds on (A-0015): the output of its latest triage
+   * step, if that step succeeded.
+   */
+  @Transactional
+  public Optional<TriageResult> triageOf(UUID incidentId) {
+    return steps
+        .findLatest(incidentId, StepType.TRIAGE)
+        .filter(step -> step.getStatus() == StepStatus.SUCCEEDED && step.getOutput() != null)
+        .map(step -> stepMapper.toTriageResult(step.getOutput()));
+  }
+
+  /** Output of the last successful step of this type (A-0014, A-0015). */
+  private static Optional<String> latestSucceeded(List<StepDto> history, StepType type) {
     return history.reversed().stream()
-        .filter(s -> s.type() == StepType.TRIAGE && s.status() == StepStatus.SUCCEEDED)
-        .filter(s -> s.output() != null)
-        .findFirst()
-        .map(s -> stepMapper.toTriageResult(s.output()))
-        .orElse(null);
+        .filter(s -> s.type() == type && s.status() == StepStatus.SUCCEEDED)
+        .map(StepDto::output)
+        .filter(output -> output != null)
+        .findFirst();
   }
 
   private static Set<IncidentState> parseStates(Collection<String> names) {

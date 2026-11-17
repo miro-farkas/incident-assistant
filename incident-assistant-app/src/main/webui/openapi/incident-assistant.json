@@ -36,6 +36,10 @@
         "type" : "string",
         "enum" : [ "DEPLOYMENT", "RESOURCE_EXHAUSTION", "DEPENDENCY", "CAPACITY", "CONFIGURATION", "OTHER" ]
       },
+      "Confidence" : {
+        "type" : "string",
+        "enum" : [ "HIGH", "MEDIUM", "LOW" ]
+      },
       "CurrentUserDto" : {
         "type" : "object",
         "properties" : {
@@ -64,6 +68,47 @@
           "comment" : {
             "type" : "string",
             "maxLength" : 2000
+          }
+        }
+      },
+      "Diagnosis" : {
+        "type" : "object",
+        "required" : [ "hypothesis", "confidence", "evidence" ],
+        "properties" : {
+          "hypothesis" : {
+            "type" : "string",
+            "pattern" : "\\S",
+            "maxLength" : 1000
+          },
+          "confidence" : {
+            "$ref" : "#/components/schemas/Confidence"
+          },
+          "evidence" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Evidence"
+            },
+            "minItems" : 1,
+            "maxItems" : 8
+          }
+        }
+      },
+      "Evidence" : {
+        "type" : "object",
+        "required" : [ "statement", "sourceType", "source" ],
+        "properties" : {
+          "statement" : {
+            "type" : "string",
+            "pattern" : "\\S",
+            "maxLength" : 500
+          },
+          "sourceType" : {
+            "$ref" : "#/components/schemas/SourceType"
+          },
+          "source" : {
+            "type" : "string",
+            "pattern" : "\\S",
+            "maxLength" : 200
           }
         }
       },
@@ -108,6 +153,9 @@
           },
           "triage" : {
             "$ref" : "#/components/schemas/TriageResult"
+          },
+          "diagnosis" : {
+            "$ref" : "#/components/schemas/Diagnosis"
           },
           "decision" : {
             "$ref" : "#/components/schemas/ApprovalDecisionDto"
@@ -280,6 +328,10 @@
             "type" : "string"
           }
         }
+      },
+      "SourceType" : {
+        "type" : "string",
+        "enum" : [ "KNOWLEDGE", "TOOL" ]
       },
       "StepDto" : {
         "type" : "object",

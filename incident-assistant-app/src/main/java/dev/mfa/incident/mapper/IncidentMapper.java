@@ -2,6 +2,7 @@ package dev.mfa.incident.mapper;
 
 import dev.mfa.incident.dto.ApprovalDecisionDto;
 import dev.mfa.incident.dto.ClaimedIncidentDto;
+import dev.mfa.incident.dto.Diagnosis;
 import dev.mfa.incident.dto.IncidentDetailDto;
 import dev.mfa.incident.dto.IncidentDto;
 import dev.mfa.incident.dto.IncidentSummaryDto;
@@ -61,6 +62,7 @@ public class IncidentMapper {
       long occurrenceCount,
       List<StepDto> steps,
       TriageResult triage,
+      Diagnosis diagnosis,
       ApprovalDecisionDto decision) {
     return new IncidentDetailDto(
         incident.getId(),
@@ -74,6 +76,7 @@ public class IncidentMapper {
         occurrenceCount,
         steps,
         triage,
+        diagnosis,
         decision);
   }
 }

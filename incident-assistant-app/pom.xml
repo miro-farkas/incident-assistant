@@ -81,6 +81,11 @@
             <groupId>io.quarkiverse.langchain4j</groupId>
             <artifactId>quarkus-langchain4j-anthropic</artifactId>
         </dependency>
+        <!-- Read tools of ops-tools-mcp for the diagnosis agent (A-0015, P-0006) -->
+        <dependency>
+            <groupId>io.quarkiverse.langchain4j</groupId>
+            <artifactId>quarkus-langchain4j-mcp</artifactId>
+        </dependency>
         <!-- pgvector columns in entities (P-0021) -->
         <dependency>
             <groupId>org.hibernate.orm</groupId>

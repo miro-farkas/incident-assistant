@@ -1,7 +1,6 @@
 package dev.mfa.incident.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.langchain4j.guardrail.OutputGuardrailException;
@@ -22,8 +21,6 @@ import dev.mfa.incident.model.StepStatus;
 import dev.mfa.incident.model.StepType;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.time.Instant;
-import java.util.Iterator;
-import java.util.Map;
 import org.jboss.logging.Logger;
 
 /**
@@ -39,11 +36,6 @@ public class TriageStep implements WorkflowStep {
   public static final ReasonCode TRIAGE_UNAVAILABLE = new ReasonCode("TRIAGE_UNAVAILABLE");
 
   private static final Logger LOG = Logger.getLogger(TriageStep.class);
-
-  /** Alert fields given to the model (A-0014); everything else stays out of the prompt. */
-  private static final String[] ALERT_FIELDS = {
-    "alertName", "source", "service", "severity", "summary", "description"
-  };
 
   private final TriageAssistant assistant;
   private final IncidentService incidents;
@@ -73,7 +65,7 @@ public class TriageStep implements WorkflowStep {
   @Override
   public void run(ClaimedIncidentDto incident) {
     Instant started = Instant.now();
-    ObjectNode input = input(incident.alertPayload());
+    ObjectNode input = AlertInput.of(json, incident.alertPayload());
     Outcome outcome = triage(incident, input);
     StepResultDto result =
         new StepResultDto(
@@ -99,12 +91,12 @@ public class TriageStep implements WorkflowStep {
     try {
       answer =
           assistant.triage(
-              text(input, "alertName"),
-              text(input, "source"),
-              text(input, "service"),
-              text(input, "severity"),
-              text(input, "summary"),
-              text(input, "description"),
+              AlertInput.text(input, "alertName"),
+              AlertInput.text(input, "source"),
+              AlertInput.text(input, "service"),
+              AlertInput.text(input, "severity"),
+              AlertInput.text(input, "summary"),
+              AlertInput.text(input, "description"),
               input.path("labels").toString());
     } catch (OutputGuardrailException e) {
       return Outcome.failed(
@@ -130,35 +122,6 @@ public class TriageStep implements WorkflowStep {
           "Token budget of " + budget.limit() + " exceeded");
     }
     return new Outcome(StepStatus.SUCCEEDED, IncidentState.TRIAGED, null, output, usage, null);
-  }
-
-  /** The alert fields the prompt uses, as recorded step input; missing ones are absent. */
-  private ObjectNode input(String alertPayload) {
-    ObjectNode input = json.createObjectNode();
-    JsonNode alert;
-    try {
-      alert = json.readTree(alertPayload);
-    } catch (JsonProcessingException e) {
-      throw new IllegalStateException("Stored alert is not JSON", e);
-    }
-    for (String field : ALERT_FIELDS) {
-      JsonNode value = alert.path(field);
-      if (value.isTextual() && !value.asText().isBlank()) {
-        input.put(field, value.asText());
-      }
-    }
-    ObjectNode labels = input.putObject("labels");
-    for (Iterator<Map.Entry<String, JsonNode>> it = alert.path("labels").fields(); it.hasNext(); ) {
-      Map.Entry<String, JsonNode> label = it.next();
-      labels.put(label.getKey(), label.getValue().asText());
-    }
-    return input;
-  }
-
-  /** {@code null} for a field the alert lacks; the prompt then says it was not reported. */
-  private static String text(ObjectNode input, String field) {
-    JsonNode value = input.get(field);
-    return value == null ? null : value.asText();
   }
 
   private ModelUsageDto usage(ChatResponse response, TokenUsage tokens) {

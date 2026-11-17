@@ -14,6 +14,8 @@ export type DecisionRequest = Schemas["DecisionDto"];
 export type Decision = Schemas["Decision"];
 export type CurrentUser = Schemas["CurrentUserDto"];
 export type TriageResult = Schemas["TriageResult"];
+export type Diagnosis = Schemas["Diagnosis"];
+export type Evidence = NonNullable<Diagnosis["evidence"]>[number];
 
 /** Every state, in workflow order; the check below fails the build when the API adds one. */
 export const INCIDENT_STATES = [

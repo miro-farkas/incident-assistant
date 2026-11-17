@@ -58,6 +58,7 @@ New ADRs use `platform/template.md` (skill `write-adr`).
 | [A-0012](app/A-0012-incident-occurrence-event.md) | Incident occurrence event | P-0012, P-0003 |
 | [A-0013](app/A-0013-knowledge-base-storage-and-ingestion.md) | Knowledge base storage and ingestion | P-0005, P-0021, P-0008, P-0009, P-0016 |
 | [A-0014](app/A-0014-triage-step-and-step-executor.md) | Triage step and step executor | P-0001, P-0003, P-0007, P-0008, P-0013 |
+| [A-0015](app/A-0015-diagnosis-step.md) | Diagnosis step | P-0001, P-0005, P-0006, P-0007, P-0008, P-0013 |
 
 ## Former numbering
 

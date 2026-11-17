@@ -33,7 +33,8 @@ public class WorkflowTables {
       Integer outputTokens,
       long durationMs,
       String reasonCode,
-      String errorMessage) {}
+      String errorMessage,
+      String toolCalls) {}
 
   private final EntityManager entityManager;
 
@@ -51,7 +52,7 @@ public class WorkflowTables {
                         select id, created_at, updated_at, version, step_type, status,
                                from_state, to_state, input::text, output::text, model_id,
                                prompt_id, prompt_version, input_tokens, output_tokens,
-                               duration_ms, reason_code, error_message
+                               duration_ms, reason_code, error_message, tool_calls::text
                         from incident_step where incident_id = :incidentId
                         order by started_at, id
                         """,
@@ -208,7 +209,8 @@ public class WorkflowTables {
         (Integer) row[14],
         ((Number) row[15]).longValue(),
         (String) row[16],
-        (String) row[17]);
+        (String) row[17],
+        (String) row[18]);
   }
 
   private static Instant instant(Object value) {

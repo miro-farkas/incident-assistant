@@ -2,6 +2,7 @@ package dev.mfa.incident.ai;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.guardrail.OutputGuardrail;
 import dev.langchain4j.guardrail.OutputGuardrailRequest;
 import dev.langchain4j.guardrail.OutputGuardrailResult;
@@ -20,6 +21,10 @@ import java.util.stream.Collectors;
  * Validation of {@link TriageResult}), and the affected service equals the service the alert
  * reported, if it reported one. A violation asks the model once more with the reason; the AI
  * service fails after that ({@code quarkus.langchain4j.guardrails.max-retries}).
+ *
+ * <p>A valid answer is returned as the message without a code fence, not as a parsed object: for a
+ * {@code Result} return type the AI service parses the message it gets back, which after a reprompt
+ * is the second answer.
  */
 @ApplicationScoped
 public class TriageOutputGuardrail implements OutputGuardrail {
@@ -61,7 +66,7 @@ public class TriageOutputGuardrail implements OutputGuardrail {
               + service.strip().toLowerCase(Locale.ROOT),
           REPROMPT);
     }
-    return successWith(text, result);
+    return successWith(AiMessage.from(withoutCodeFence(text)));
   }
 
   /** Small models sometimes wrap JSON in a Markdown code fence despite the output rules. */

@@ -65,6 +65,57 @@ describe("IncidentDetailPage", () => {
     expect(screen.queryByText("errors")).not.toBeInTheDocument();
   });
 
+  it("shows the diagnosis of a diagnosed incident with its evidence as text", async () => {
+    const triageStep = incident().steps![0]!;
+    stubFetch(
+      json(
+        incident({
+          steps: [
+            triageStep,
+            {
+              id: "0d3c6f1e-0000-4000-8000-000000000002",
+              type: "DIAGNOSIS",
+              status: "SUCCEEDED",
+              fromState: "TRIAGED",
+              toState: "DIAGNOSED",
+              startedAt: "2026-10-18T10:02:00Z",
+              finishedAt: "2026-10-18T10:03:00Z",
+              durationMs: 60000,
+              output: { hypothesis: "raw output" } as unknown as Record<string, never>,
+            },
+          ],
+          diagnosis: {
+            hypothesis: "Release <i>2026.10.18-1</i> broke the checkout API.",
+            confidence: "HIGH",
+            evidence: [
+              {
+                statement: "Error rate rose right after the deployment.",
+                sourceType: "TOOL",
+                source: "get_service_metrics",
+              },
+              {
+                statement: "A past bad deployment showed the same pattern.",
+                sourceType: "KNOWLEDGE",
+                source: "Checkout bad deployment postmortem",
+              },
+            ],
+          },
+        }),
+      ),
+    );
+    renderDetail(VIEWER);
+
+    const diagnosis = await screen.findByTestId("diagnosis-result");
+    expect(diagnosis).toHaveTextContent("Release <i>2026.10.18-1</i> broke the checkout API.");
+    expect(diagnosis.querySelector("i")).toBeNull();
+    expect(diagnosis).toHaveTextContent("HIGH");
+    expect(diagnosis).toHaveTextContent(
+      "Error rate rose right after the deployment. (TOOL: get_service_metrics)",
+    );
+    expect(diagnosis).toHaveTextContent("(KNOWLEDGE: Checkout bad deployment postmortem)");
+    expect(screen.queryByText("raw output")).not.toBeInTheDocument();
+  });
+
   it("renders markup in alert fields as text", async () => {
     const hostile = '<img src="x" onerror="alert(1)">';
     stubFetch(

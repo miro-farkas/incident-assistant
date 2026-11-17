@@ -57,12 +57,12 @@ class TriageOutputGuardrailTest {
   }
 
   @Test
-  void validAnswerPassesWithTheParsedResult() {
+  void validAnswerPassesAsTheMessageTheServiceParses() throws Exception {
     OutputGuardrailResult result =
         validate(answer("HIGH", "DEPLOYMENT", "checkout", "Errors after the release."), "Checkout");
 
     assertThat(result.isSuccess()).isTrue();
-    assertThat(result.successfulResult())
+    assertThat(new ObjectMapper().readValue(result.successfulText(), TriageResult.class))
         .isEqualTo(
             new TriageResult(
                 TriageResult.Severity.HIGH,
